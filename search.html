@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#0c0c0e" media="(min-width: 1100px) and (min-height: 600px)" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <link rel="icon" href="./image/b5c2a091-eb74-4b78-99dd-b52dc2a1dfe5.png" />
+    <link rel="apple-touch-icon" href="./image/b5c2a091-eb74-4b78-99dd-b52dc2a1dfe5.png" />
+    <title>搜索 · JMComic</title>
+    <link rel="stylesheet" href="./style/app.css" />
+    <link rel="stylesheet" href="./style/listing.css" />
+</head>
+<body data-page="search">
+    <a class="skip-link" href="#main">跳到主要内容</a>
+    <main class="app-main" id="main" tabindex="-1">
+        <div class="page listing">
+            <header class="page-head listing-head">
+                <div class="page-head-copy">
+                    <span class="eyebrow">搜索</span>
+                    <h1 class="page-title" data-query-title>搜索结果</h1>
+                </div>
+                <form class="search-form listing-search" role="search">
+                    <svg class="search-icon" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg>
+                    <input class="input" type="search" name="q" enterkeyhint="search" autocomplete="off" placeholder="作品、作者或番号" aria-label="修改搜索关键词" />
+                    <button class="btn btn-primary btn-sm search-submit" type="submit">搜索</button>
+                </form>
+            </header>
+            <div class="listing-layout">
+                <div class="listing-bar">
+                    <p class="listing-state" data-result-state aria-live="polite">正在载入</p>
+                    <div class="listing-bar-actions">
+                        <button class="btn btn-outline btn-sm filter-toggle" type="button" data-filter-toggle aria-haspopup="dialog">
+                            <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>
+                            筛选 <b class="badge" data-filter-count hidden>0</b>
+                        </button>
+                        <button class="btn btn-ghost btn-sm" type="button" data-filter-reset disabled>重置筛选</button>
+                    </div>
+                </div>
+                <aside class="filter-panel" aria-label="筛选条件"></aside>
+                <div class="listing-results">
+                    <div class="comic-grid" data-results></div>
+                    <div class="feed-footer" data-feed></div>
+                </div>
+            </div>
+        </div>
+    </main>
+    <script type="module" src="./src/pages/search.js"></script>
+</body>
+</html>

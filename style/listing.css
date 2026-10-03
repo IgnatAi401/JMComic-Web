@@ -1,0 +1,42 @@
+.listing-head { align-items: flex-end; flex-wrap: wrap; }
+.listing-search { width: min(100%, 460px); }
+.listing-layout { display: grid; gap: 20px; }
+.listing-bar { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.listing-state { color: var(--text-2); font-size: 13px; }
+.listing-bar-actions { display: flex; align-items: center; flex-shrink: 0; gap: 8px; }
+.listing-results { min-width: 0; }
+.listing-results > .comic-grid > .state { grid-column: 1 / -1; }
+.filter-panel { min-width: 0; }
+.organized-head { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px 16px; margin-bottom: 20px; }
+.organized-summary { color: var(--text-2); font-size: 13px; }
+.organized-hint { margin: -6px 0 14px; color: var(--text-3); font-size: 13px; }
+.organized-group { margin-top: 32px; }
+.organized-head + .organized-group { margin-top: 0; }
+.organized .rich-note { color: var(--accent-text); }
+.filter-group { padding: 16px 0; border-bottom: 1px solid var(--line); }
+.filter-group:first-child { padding-top: 0; }
+.filter-group:last-child { border-bottom: 0; }
+.filter-label { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; font-size: 13px; font-weight: 600; }
+.filter-label small { color: var(--text-3); font-size: 11px; font-weight: 400; }
+.filter-sheet-actions { display: flex; justify-content: space-between; padding-top: 24px; }
+.feed-status { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 12px; }
+@media (min-width: 700px) {
+    .filter-toggle { display: none; }
+    .filter-panel { padding: 20px; background: var(--bg-raised); border-radius: var(--r-lg); }
+    .filter-panel .filter-group { display: flex; align-items: baseline; gap: 20px; }
+    .filter-label { min-width: 50px; margin: 0; }
+    .filter-label small { display: none; }
+}
+@media (min-width: 1280px) {
+    .listing-layout { grid-template-columns: minmax(0, 1fr) 212px; column-gap: 32px; }
+    .listing-bar { grid-column: 1 / -1; }
+    .listing-results { grid-column: 1; grid-row: 2; }
+    .filter-panel { grid-column: 2; grid-row: 2; align-self: start; position: sticky; top: 24px; }
+    .filter-panel .filter-group { display: block; }
+    .filter-label { margin-bottom: 12px; }
+    .filter-label small { display: block; }
+}
+@media (max-width: 440px) {
+    .listing-bar { align-items: flex-start; }
+    .listing-bar-actions { flex-direction: column; align-items: flex-end; }
+}

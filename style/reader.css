@@ -1,0 +1,77 @@
+.reader-body { --nav-w: 0px; --tabbar-h: 112px; --chrome-bottom: calc(var(--tabbar-h) + var(--safe-bottom) + 12px); background: #0c0c0e; }
+.reader-page.page { padding: 0; max-width: none; }
+.reader-body .app-main { padding-top: 0; }
+/* One bottom panel; leave the viewport edges clear for Safari's browser chrome.
+ * Keep image scrolling free of expensive blur effects. */
+.reader-tools {
+    position: fixed; z-index: 15;
+    left: calc(var(--safe-left) + 12px); right: calc(var(--safe-right) + 12px);
+    bottom: calc(var(--safe-bottom) + 12px);
+    width: auto; max-width: 680px; margin-inline: auto;
+    padding: 4px 8px 7px;
+    background: rgba(38, 40, 46, .72);
+    border: 1px solid var(--line-strong); border-radius: var(--r-lg);
+    box-shadow: var(--shadow-2); transition: opacity var(--t-med);
+}
+.reader-heading { display: flex; align-items: center; gap: 8px; min-height: 48px; padding-bottom: 4px; border-bottom: 1px solid var(--line); }
+.reader-heading > div { min-width: 0; flex: 1; }
+.reader-heading .icon-btn { flex: none; background: none; border: 0; }
+.reader-title { font: 550 13px/1.4 var(--font); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.reader-subtitle { color: var(--text-2); font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.reader-actions { display: grid; grid-template-columns: 1fr 1fr 1.4fr 1fr 1fr; align-items: center; padding-top: 4px; }
+.reader-images { width: min(100%, 900px); margin: 0 auto; overflow-anchor: none; }
+.reader-images > .reader-page { position: relative; min-height: 120px; background: #151519; }
+.reader-images > .reader-page[data-state="pending"], .reader-images > .reader-page[data-state="rendering"] { aspect-ratio: 600 / 1050; }
+.reader-images > .reader-page[data-state="pending"]::after, .reader-images > .reader-page[data-state="rendering"]::after { content: "正在载入第 " attr(data-page-number) " 页"; position: absolute; inset: 0; display: grid; place-items: center; color: var(--text-3); font-size: 12px; pointer-events: none; }
+.reader-page img, .reader-page canvas { display: block; width: 100%; height: auto; }
+.reader-page > div:not(.reader-image-error) { width: 100%; }
+.reader-image-error { min-height: 55svh; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 20px; padding: 24px; text-align: center; color: var(--text-2); }
+.reader-image-error button { min-height: 44px; background: var(--surface-3); border: 1px solid var(--line-strong); border-radius: var(--r-sm); padding: 10px 20px; }
+.reader-tool { display: flex; flex-direction: column; gap: 4px; align-items: center; justify-content: center; min-width: 0; min-height: 50px; border: 0; border-radius: var(--r-sm); color: var(--text-2); background: none; }
+.reader-tool > span:not(.mono) { font-size: 24px; line-height: 24px; }
+.reader-tool small { font-size: 10px; }
+.reader-tool[aria-disabled="true"], a.btn[aria-disabled="true"] { opacity: .3; pointer-events: none; }
+.reader-position .mono { font-size: 13px; }
+.reader-position b { color: var(--accent-text); font-size: 18px; }
+.reader-position i { font-style: normal; color: var(--text-3); }
+.reader-track { position: absolute; left: 12px; top: 0; right: 12px; height: 2px; background: var(--surface-3); }
+.reader-track-fill { display: block; height: 100%; width: 0; background: var(--accent); }
+.reader-focus .reader-tools { visibility: hidden; opacity: 0; pointer-events: none; }
+.reader-afterword { width: min(100%, 850px); padding: 40px 20px 20px; margin: 0 auto; }
+.reader-end { padding: 12px 0 48px; text-align: center; }
+.reader-end-title { font-size: 20px; margin: 10px 0 24px; }
+.reader-end .page-actions { justify-content: center; }
+.reader-end .reader-later { margin-top: 12px; }
+.reader-chapter-list { display: grid; gap: 8px; }
+.reader-progress-form { display: grid; gap: 18px; }
+.reader-progress-form input[type="range"] { width: 100%; min-height: 44px; accent-color: var(--accent); }
+.reader-body .toast-region { bottom: calc(var(--chrome-bottom) + 12px); }
+@media (hover: hover) { .reader-tool:hover { background: var(--hover); color: var(--text); } }
+@media (orientation: landscape) {
+    .reader-images {
+        --reader-fit-height: max(1px, calc(100svh - var(--safe-top) - var(--chrome-bottom) - 12px));
+        padding-inline: max(12px, var(--safe-left)) max(12px, var(--safe-right));
+    }
+    .reader-images > .reader-page {
+        width: min(100%, calc(var(--reader-fit-height) * var(--reader-image-ratio, 0.5714285714)));
+        min-height: 0;
+        /* Override released pages' pixel heights when the device rotates. */
+        height: auto !important;
+        aspect-ratio: var(--reader-image-ratio, 0.5714285714);
+        margin: 0 auto;
+    }
+    .reader-images > .reader-page[data-state="pending"],
+    .reader-images > .reader-page[data-state="rendering"] {
+        aspect-ratio: var(--reader-image-ratio, 0.5714285714);
+    }
+}
+@media (max-height: 500px) and (orientation: landscape) {
+    .reader-body { --tabbar-h: 60px; }
+    .reader-tools { display: flex; align-items: center; gap: 8px; max-width: 900px; padding-block: 4px; }
+    .reader-heading { width: 30%; min-width: 0; border-bottom: 0; border-right: 1px solid var(--line); padding: 0 8px 0 0; }
+    .reader-actions { flex: 1; min-width: 0; padding-top: 0; }
+    .reader-tool { min-height: 44px; }
+}
+@media (prefers-reduced-motion: reduce) { .reader-tools { transition: none; } }
+
+@media (prefers-reduced-transparency: reduce) { .reader-tools { background: var(--bg-raised); } }
