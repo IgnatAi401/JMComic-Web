@@ -1,3 +1,3 @@
 # JMComic Web
 
-https://ignatai401.github.io/JMComic-Web/
+https://jm.ignat.ai
