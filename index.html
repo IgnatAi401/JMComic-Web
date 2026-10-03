@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#0c0c0e" media="(min-width: 1100px) and (min-height: 600px)" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <link rel="icon" href="./image/b5c2a091-eb74-4b78-99dd-b52dc2a1dfe5.png" />
+    <link rel="apple-touch-icon" href="./image/b5c2a091-eb74-4b78-99dd-b52dc2a1dfe5.png" />
+    <title>发现 · JMComic</title>
+    <link rel="stylesheet" href="./style/app.css" />
+    <link rel="stylesheet" href="./style/home.css" />
+</head>
+<body data-page="index">
+    <a class="skip-link" href="#main">跳到主要内容</a>
+    <main class="app-main" id="main" tabindex="-1">
+        <div class="page home">
+            <header class="page-head">
+                <div class="page-head-copy">
+                    <span class="eyebrow" data-today></span>
+                    <h1 class="page-title">发现</h1>
+                </div>
+            </header>
+
+            <div class="home-layout">
+                <section class="random" aria-labelledby="random-title" aria-busy="true">
+                    <div class="random-backdrop" aria-hidden="true"><img alt="" /></div>
+                    <div class="random-media">
+                        <a class="cover random-cover" data-random-cover aria-disabled="true"><img alt="" /></a>
+                        <div class="random-pager">
+                            <button class="icon-btn" type="button" data-random-prev aria-label="上一本（较早的随机结果）" disabled><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m15 6-6 6 6 6"/></svg></button>
+                            <span class="random-position mono" data-random-position aria-live="polite">—</span>
+                            <button class="icon-btn" type="button" data-random-next aria-label="下一本（较新的随机结果）" disabled><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg></button>
+                        </div>
+                    </div>
+                    <div class="random-copy">
+                        <p class="random-kicker">
+                            <span class="random-label">随机一本</span>
+                            <span class="mono" data-random-id>JM ———</span>
+                            <span class="random-status" data-random-status>正在抽取</span>
+                        </p>
+                        <h2 class="random-title" id="random-title" data-random-title>正在寻找一本有效的作品…</h2>
+                        <p class="random-author" data-random-author>&nbsp;</p>
+                        <p class="random-description" data-random-description></p>
+                        <div class="tag-list random-tags" data-random-tags></div>
+                        <dl class="random-stats">
+                            <div><dt>章节</dt><dd class="num" data-random-chapters>—</dd></div>
+                            <div><dt>页数</dt><dd class="num" data-random-pages>—</dd></div>
+                            <div><dt>评论</dt><dd class="num" data-random-comments>—</dd></div>
+                            <div><dt>发布</dt><dd class="num" data-random-date>—</dd></div>
+                        </dl>
+                        <div class="random-actions">
+                            <a class="btn btn-primary" data-random-open aria-disabled="true">查看详情</a>
+                            <button class="btn btn-outline" type="button" data-random-trigger><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h4v4"/><path d="M4 20 20 4"/><path d="M20 16v4h-4"/><path d="m15 15 5 5"/><path d="M4 4l5 5"/></svg><span data-random-trigger-label>换一本</span></button>
+                            <button class="btn btn-outline" type="button" data-random-later hidden><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg><span>稍后再看</span></button>
+                            <a class="btn btn-ghost" href="./library.html?view=random" data-navigation="same-tab">随机历史</a>
+                        </div>
+                    </div>
+                </section>
+
+                <div class="home-side">
+                    <section class="section continue later" aria-labelledby="later-title" hidden>
+                        <div class="section-head">
+                            <h2 class="section-title" id="later-title">稍后再看</h2>
+                            <a class="section-link" href="./library.html?view=later" data-navigation="same-tab">全部</a>
+                        </div>
+                        <ol class="continue-list later-list"></ol>
+                    </section>
+
+                    <section class="section continue reading" aria-labelledby="continue-title" hidden>
+                        <div class="section-head">
+                            <h2 class="section-title" id="continue-title">继续阅读</h2>
+                            <a class="section-link" href="./library.html?view=history" data-navigation="same-tab">全部</a>
+                        </div>
+                        <ol class="continue-list"></ol>
+                    </section>
+                </div>
+
+                <section class="section home-tags" aria-labelledby="tags-title">
+                    <div class="section-head">
+                        <h2 class="section-title" id="tags-title">常用标签</h2>
+                        <a class="section-link" href="./categories.html" data-navigation="same-tab">全部分类</a>
+                    </div>
+                    <div class="chip-row is-scroll">
+                        <a class="chip" href="./search.html?sq=%E5%B7%A8%E4%B9%B3">巨乳</a>
+                        <a class="chip" href="./search.html?sq=%E4%B9%B3%E6%B1%81">乳汁</a>
+                        <a class="chip" href="./search.html?sq=%E4%BF%AE%E5%A5%B3">修女</a>
+                        <a class="chip" href="./search.html?sq=%E5%82%AC%E7%9C%A0">催眠</a>
+                        <a class="chip" href="./search.html?sq=%E5%A5%B3%E4%BB%86">女仆</a>
+                        <a class="chip" href="./search.html?sq=%E6%80%AA%E7%89%A9%E5%A5%B3%E5%AD%A9">怪物女孩</a>
+                        <a class="chip" href="./search.html?sq=%E5%B8%B8%E8%AF%86%E6%94%B9%E5%8F%98">常识改变</a>
+                    </div>
+                </section>
+
+                <div class="shelves" aria-busy="true" aria-live="polite">
+                    <div class="loading-row" role="status"><span class="spinner" aria-hidden="true"></span><span>正在整理今日书架</span></div>
+                </div>
+            </div>
+        </div>
+    </main>
+    <script type="module" src="./src/pages/index.js"></script>
+</body>
+</html>

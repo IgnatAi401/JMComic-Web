@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#0c0c0e" media="(min-width: 1100px) and (min-height: 600px)" />
+    <meta name="color-scheme" content="dark" />
+    <link rel="icon" href="./image/b5c2a091-eb74-4b78-99dd-b52dc2a1dfe5.png" />
+    <title>阅读 · JMComic</title>
+    <link rel="stylesheet" href="./style/app.css" />
+    <link rel="stylesheet" href="./style/workspace.css" />
+    <link rel="stylesheet" href="./style/reader.css" />
+</head>
+<body data-page="reader" class="reader-body">
+    <a class="skip-link" href="#main">跳到主要内容</a>
+    <main class="app-main" id="main" tabindex="-1"><div class="page reader-page">
+<div class="reader-loading loading-row" role="status"><span class="spinner" aria-hidden="true"></span>正在打开章节…</div>
+<div class="reader-images" tabindex="0" aria-label="漫画正文，点击或按空格显示、隐藏阅读工具"></div>
+<nav class="reader-tools" aria-label="阅读工具" data-navigation-scope="same-tab">
+<header class="reader-heading" data-navigation-scope="same-tab"><a class="icon-btn" href="./index.html" data-reader-back aria-label="返回作品详情"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="24" height="24"><path d="M19 12H5m6-6-6 6 6 6"/></svg></a><div><h1 class="reader-title">正在载入</h1><p class="reader-subtitle"></p></div></header>
+<div class="reader-track" aria-hidden="true"><span class="reader-track-fill"></span></div>
+<div class="reader-actions" hidden>
+<a class="reader-tool" data-reader-prev aria-disabled="true" aria-label="上一章"><span aria-hidden="true">←</span><small>上一章</small></a>
+<button class="reader-tool" type="button" data-reader-chapters aria-haspopup="dialog"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="24" height="24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg><small>目录</small></button>
+<button class="reader-tool reader-position" type="button" data-reader-progress aria-haspopup="dialog"><span class="mono"><b data-page-current>1</b><i> / </i><span data-page-total>—</span></span><small>阅读进度</small></button>
+<button class="reader-tool" type="button" data-reader-settings aria-haspopup="dialog"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="24" height="24" aria-hidden="true"><path d="M4 7h10m4 0h2M4 17h4m4 0h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg><small>图源 / 并发</small></button>
+<a class="reader-tool" data-reader-next aria-disabled="true" aria-label="下一章"><span aria-hidden="true">→</span><small>下一章</small></a></div></nav>
+
+<div class="reader-afterword" hidden><section class="reader-end"><p class="eyebrow">本话结束</p><h2 class="reader-end-title"></h2><div class="page-actions" data-navigation-scope="same-tab"><a class="btn btn-outline" data-reader-prev>上一章</a><a class="btn btn-primary" data-reader-next>下一章</a></div><div class="page-actions reader-later" hidden><button class="btn btn-outline" type="button" data-reader-later-remove>从稍后再看移除</button></div></section><section class="section reader-comments"></section></div></div></main>
+    <script type="module" src="./src/pages/reader.js"></script>
+</body>
+</html>
