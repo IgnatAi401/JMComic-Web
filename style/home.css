@@ -3,19 +3,18 @@
 .home-layout {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
-    grid-template-areas: "random" "side" "tags" "shelves";
+    grid-template-areas: "random" "side" "shelves";
 }
 .random { grid-area: random; }
 .home-side { grid-area: side; min-width: 0; margin-top: 40px; }
 /* The section after a hidden one leads the sidebar, so it drops its own gap. */
 .home-side > [hidden] + .continue { margin-top: 0; }
-.home-tags { grid-area: tags; }
 .shelves { grid-area: shelves; margin-top: 36px; min-width: 0; }
 
 @media (min-width: 1360px) {
     .home-layout {
         grid-template-columns: minmax(0, 1fr) 300px;
-        grid-template-areas: "random side" "tags side" "shelves side";
+        grid-template-areas: "random side" "shelves side";
         column-gap: 48px;
         align-items: start;
     }
