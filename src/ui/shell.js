@@ -1,6 +1,6 @@
 import { setting } from "../core/Setting.js";
 import { openInNewPage } from "../utils/NavigationPolicy.js";
-import { escapeHtml, pageName, searchUrl } from "./dom.js";
+import { pageName, searchUrl } from "./dom.js";
 import { icon } from "./icons.js";
 import { Sheet } from "./overlay.js";
 import { mountReadingControls } from "./reading-controls.js";
@@ -15,7 +15,6 @@ const PRIMARY = [
 const PERSONAL = [
     { page: "library", label: "书架", rail: "书架", icon: "library" },
 ];
-const HOT_TAGS = ["巨乳", "乳汁", "修女", "催眠", "女仆", "怪物女孩", "常识改变"];
 
 const navLink = (item, current) => `
     <a class="nav-item" href="./${item.page}.html"${item.page === current ? ' aria-current="page"' : ""} aria-label="${item.label}">
@@ -163,10 +162,6 @@ class AppShell {
                     <button class="btn btn-primary btn-sm search-submit" type="submit">搜索</button>
                 </form>
                 <div class="sheet-section search-history-section" style="margin-top:22px" hidden></div>
-                <div class="sheet-section" style="margin-top:22px">
-                    <h3 class="sheet-section-title">常用标签</h3>
-                    <div class="chip-row">${HOT_TAGS.map((tag) => `<button class="chip" type="button" data-search-tag="${escapeHtml(tag)}">${escapeHtml(tag)}</button>`).join("")}</div>
-                </div>
                 <div class="sheet-section" data-navigation-scope="same-tab">
                     <a class="group group-row" href="./categories.html">${icon("categories")}<span class="group-row-copy"><strong>按分类与排行浏览</strong><small>主分类、副分类、时间与排序</small></span>${icon("chevronRight", "chevron")}</a>
                 </div>`;
@@ -174,10 +169,6 @@ class AppShell {
             form.addEventListener("submit", (event) => {
                 event.preventDefault();
                 this.submitSearch(form.elements.q.value);
-            });
-            this.searchSheet.body.addEventListener("click", (event) => {
-                const tag = event.target.closest("[data-search-tag]");
-                if (tag) this.submitSearch(tag.dataset.searchTag);
             });
             mountSearchHistorySection(this.searchSheet.body.querySelector(".search-history-section"), (query) => this.submitSearch(query));
         }
