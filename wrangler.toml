@@ -1,0 +1,14 @@
+# jm.ignat.ai on Cloudflare Workers: static assets only, no Worker script.
+# The workflow copies the site files into _site before `wrangler deploy`.
+name = "jmcomic-web"
+compatibility_date = "2026-09-25"
+# Only the custom domain: no workers.dev or preview URLs.
+workers_dev = false
+preview_urls = false
+
+# The custom domain creates its own DNS record on the first deploy; the zone
+# must not already have a record for jm.ignat.ai.
+routes = [{ pattern = "jm.ignat.ai", custom_domain = true }]
+
+[assets]
+directory = "./_site"
