@@ -1,4 +1,9 @@
 import CryptoJS from "../utils/crypto.js";
+
+// JM may prefix JSON (and its encrypted payloads) with a UTF-8 BOM; accept it either way.
+export const stripBom = (text) => String(text ?? "").replace(/^[\s\uFEFF]+/, "");
+export const parseJsonText = (text) => JSON.parse(stripBom(text));
+
 class Crypto {
     predefinedKeyTemplates = ["185Hcomic3PAPP7R", "18comicAPPContent"];
     constructor() {}
@@ -10,11 +15,11 @@ class Crypto {
             try {
                 const dynamicKey = this.calculateMD5(key + template);
                 const decryptedData = CryptoJS.AES.decrypt(
-                    cipherText,
+                    stripBom(cipherText).trim(),
                     CryptoJS.enc.Utf8.parse(dynamicKey),
                     { mode: CryptoJS.mode.ECB },
                 );
-                return JSON.parse(decryptedData.toString(CryptoJS.enc.Utf8));
+                return parseJsonText(decryptedData.toString(CryptoJS.enc.Utf8));
             } catch (error) {
                 continue;
             }
@@ -22,14 +27,14 @@ class Crypto {
         throw new Error("Decryption failed");
     }
     decryptCurrentApi(text) {
-        text = text.replace(/^\uFEFF/, "").trim();
+        text = stripBom(text).trim();
         const dynamicKey = this.calculateMD5("diosfjckwpqpdfjkvnqQjsik");
         const decryptedData = CryptoJS.AES.decrypt(
             text,
             CryptoJS.enc.Utf8.parse(dynamicKey),
             { mode: CryptoJS.mode.ECB },
         );
-        return JSON.parse(decryptedData.toString(CryptoJS.enc.Utf8));
+        return parseJsonText(decryptedData.toString(CryptoJS.enc.Utf8));
     }
 }
 export const crypto = new Crypto();
