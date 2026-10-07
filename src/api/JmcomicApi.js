@@ -1,7 +1,7 @@
 import { setting } from "../core/Setting.js";
 import { readCache, writeCache } from "../utils/BrowserCache.js";
 import { readLocalStorage, removeLocalStorage, writeLocalStorage } from "../utils/BrowserStorage.js";
-import { crypto } from "./Crypto.js";
+import { crypto, parseJsonText } from "./Crypto.js";
 import { listingApiOrder, listingCategoryPath, normalizeListingFilters } from "../utils/ListingFilters.js";
 
 /** Browser client for the public (anonymous) JM mobile API. */
@@ -154,7 +154,9 @@ class JmcomicApi {
         const readResponse = async (response) => {
             let payload;
             try {
-                payload = await response.json();
+                payload = typeof response.text === "function"
+                    ? parseJsonText(await response.text())
+                    : await response.json();
             } catch (error) {
                 if (error?.name === "AbortError") throw error;
                 if (response.ok) throw new Error("当前 API 线路返回了无效数据");
