@@ -114,7 +114,14 @@ body[data-page="history-migration"] { --nav-w: 0px; --tabbar-h: 0px; }
 .detail-byline, .detail-tags, .detail-description, .detail-stats, .detail-actions { grid-column: 1 / -1; }
 .detail-byline { display: flex; align-items: center; justify-content: space-between; gap: 12px; color: var(--text-2); font-size: 13px; }
 .detail-byline > span { min-width: 0; }
-.detail-byline > button { flex: none; }
+.detail-byline > .detail-byline-actions { display: flex; flex: none; gap: 4px; }
+/* Manage mode: tags and authors become stance-cycling buttons. */
+.detail-copy button.tag, .detail-copy button.author-name { border: 0; cursor: pointer; font: inherit; }
+.detail-copy button.tag { font-size: 13px; }
+.detail-copy button.author-name:not([data-preference]) { padding: 0 6px; border-radius: var(--r-xs); background: var(--surface-2); color: var(--text-2); line-height: 1.5; }
+.is-managing-preferences .detail-tags .tag:not([data-preference]), .is-managing-preferences .detail-authors .author-name:not([data-preference]) { outline: 1px dashed var(--text-3); outline-offset: -1px; }
+.is-managing-preferences [data-manage-preference]:active { transform: scale(0.96); }
+.detail-byline [data-manage-preferences][aria-pressed="true"] { color: var(--accent-text); }
 .detail-description { color: var(--text-2); max-width: 68ch; font-size: 14px; white-space: pre-wrap; line-height: 1.85; }
 .detail-stats { display: flex; gap: 28px; }
 .detail-stats dt { color: var(--text-3); font-size: 11px; }

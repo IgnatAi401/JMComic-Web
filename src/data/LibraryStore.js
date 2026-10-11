@@ -7,6 +7,13 @@ const LISTS = {
     later: { key: "jm_watch_later_v1", limit: 500 },
 };
 
+/** Tag and author stances live beside the lists, as `{ tags, authors }` maps of name → level. */
+const PREFERENCES_KEY = "jm_preferences_v1";
+// Allowed levels per kind, strongest liking first.
+const PREFERENCE_LEVELS = { tag: ["like", "fond", "avoid", "dislike"], author: ["like", "dislike"] };
+const MAX_PREFERENCES_PER_KIND = 1000;
+const PREFERENCE_NAME = /^[^\x00-\x1f\x7f]{1,80}$/u;
+
 function readList(key) {
     try {
         const value = JSON.parse(readLocalStorage(key, "[]"));
@@ -47,8 +54,20 @@ function normalizeRandomAlbum(album) {
     };
 }
 
+function readPreferences() {
+    let value;
+    try { value = JSON.parse(readLocalStorage(PREFERENCES_KEY, "{}")); } catch { value = null; }
+    const pick = (kind) => {
+        const entries = value?.[`${kind}s`];
+        return Object.fromEntries(Object.entries(entries && typeof entries === "object" ? entries : {})
+            .filter(([name, level]) => PREFERENCE_NAME.test(name) && PREFERENCE_LEVELS[kind].includes(level)));
+    };
+    return { tags: pick("tag"), authors: pick("author") };
+}
+
 class LibraryStore {
     lists = { reading: [], random: [], later: [] };
+    preferences = { tags: {}, authors: {} };
     loaded = false;
 
     init() {
@@ -57,7 +76,7 @@ class LibraryStore {
             this.#load();
             // Keep several open tabs in step with each other.
             window.addEventListener("storage", (event) => {
-                if (event.key === null || Object.values(LISTS).some((list) => list.key === event.key)) {
+                if (event.key === null || event.key === PREFERENCES_KEY || Object.values(LISTS).some((list) => list.key === event.key)) {
                     this.#load();
                     this.#notify();
                 }
@@ -68,6 +87,7 @@ class LibraryStore {
 
     #load() {
         for (const [kind, { key }] of Object.entries(LISTS)) this.lists[kind] = readList(key);
+        this.preferences = readPreferences();
     }
 
     getHistory() { this.init(); return this.lists.reading; }
@@ -100,6 +120,36 @@ class LibraryStore {
     addWatchLater(album) { return this.#mutate("later", [normalizeRandomAlbum({ ...album, savedAt: Date.now() })]); }
     removeWatchLater(id) { return this.#mutate("later", [], String(id)); }
     clearWatchLater() { return this.#mutate("later", [], true); }
+
+    getPreferences() { this.init(); return this.preferences; }
+
+    /**
+     * Upsert one `{ kind, name, level }` stance; `level: null` deletes it and `previous`
+     * renames an entry. Resolves to every preference, like the JMComic-Next backend.
+     */
+    async savePreference({ kind, name, level = null, previous = "" } = {}) {
+        this.init();
+        if (!PREFERENCE_LEVELS[kind]) throw new Error("偏好类型无效");
+        const clean = String(name ?? "").trim();
+        if (!PREFERENCE_NAME.test(clean)) throw new Error("名称不能为空，且不超过 80 个字符");
+        if (level !== null && !PREFERENCE_LEVELS[kind].includes(level)) throw new Error("偏好等级无效");
+        // Start from storage so a change made in another tab is not overwritten.
+        const next = readPreferences();
+        const entries = next[`${kind}s`];
+        const old = String(previous ?? "").trim();
+        if (old && old !== clean) delete entries[old];
+        if (level === null) delete entries[clean];
+        else {
+            if (!(clean in entries) && Object.keys(entries).length >= MAX_PREFERENCES_PER_KIND) {
+                throw new Error(`每类偏好最多 ${MAX_PREFERENCES_PER_KIND} 项`);
+            }
+            entries[clean] = level;
+        }
+        if (!writeLocalStorage(PREFERENCES_KEY, JSON.stringify(next))) throw new Error("浏览器存储不可用或已满");
+        this.preferences = next;
+        this.#notify();
+        return next;
+    }
     #notify() { window.dispatchEvent(new CustomEvent("jm-library-change")); }
 }
 
