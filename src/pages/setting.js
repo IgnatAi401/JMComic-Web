@@ -5,6 +5,8 @@ import { PreferenceEditor } from "../ui/preference-editor.js";
 import { AUTHOR_LEVELS, TAG_LEVELS, preferenceMaps } from "../ui/preferences.js";
 import { clearCache } from "../utils/BrowserCache.js";
 import { showToast } from "../ui/toast.js";
+import { openChangelog } from "../ui/changelog.js";
+import { LATEST_VERSION } from "../data/changelog.js";
 
 mountShell();
 mountReadingControls(document.querySelector("#settings-reading"));
@@ -21,6 +23,10 @@ const renderPreferences = () => {
 renderPreferences();
 // Keep the editors current when another tab changes the stances.
 window.addEventListener("jm-library-change", renderPreferences);
+
+const changelogVersion = document.querySelector("[data-changelog-version]");
+if (changelogVersion && LATEST_VERSION) changelogVersion.textContent = `当前版本 ${LATEST_VERSION}`;
+document.querySelector("[data-open-changelog]")?.addEventListener("click", (event) => openChangelog(event.currentTarget));
 
 document.querySelector("[data-clear-cache]")?.addEventListener("click", () => {
     const count = clearCache();
