@@ -1,4 +1,5 @@
 import { jmApi } from "../api/JmcomicApi.js";
+import { libraryStore } from "../data/LibraryStore.js";
 import { translateTitleToSimplifiedChinese } from "../api/GoogleTranslateApi.js";
 import { readLocalStorage } from "../utils/BrowserStorage.js";
 import { mountShell } from "../ui/shell.js";
@@ -9,7 +10,7 @@ import { hydrateRichCards } from "../ui/rich-cards.js";
 import { chaptersOf } from "../ui/chapters.js";
 import { Comments } from "../ui/comments.js";
 import { PagePreview } from "../ui/page-preview.js";
-import { loadPreferences, preferenceAuthorsHtml, preferenceTagsHtml } from "../ui/preferences.js";
+import { AUTHOR_LEVELS, TAG_LEVELS, loadPreferences, nextLevel, preferenceAuthorsHtml, preferenceMaps, preferenceTagsHtml } from "../ui/preferences.js";
 import { icon } from "../ui/icons.js";
 import { renderPageError } from "../ui/states.js";
 import { showToast } from "../ui/toast.js";
@@ -33,9 +34,11 @@ class ChapterPage {
         this.render();
         this.bind();
         this.renderChapters();
-        loadPreferences().then((preferences) => {
-            this.root.querySelector(".detail-authors").innerHTML = preferenceAuthorsHtml(authorsOf(album), preferences.authors, { link: true });
-            this.root.querySelector(".detail-tags").innerHTML = preferenceTagsHtml(album.tags, preferences.tags);
+        loadPreferences().then((preferences) => { this.preferences = preferences; this.renderPreferences(); });
+        // Another tab may edit stances; skip our own saves, which already re-rendered.
+        window.addEventListener("jm-library-change", () => {
+            if (this.savingPreference) return;
+            loadPreferences().then((preferences) => { this.preferences = preferences; this.renderPreferences(); });
         });
         const first = this.chapters[0];
         new PagePreview(this.root.querySelector(".detail-preview"), album, { id: first.id, label: this.chapters.length > 1 ? "第 1 章" : "全篇" }).mount();
@@ -48,7 +51,7 @@ class ChapterPage {
             <div class="detail-cover">${coverHtml(album, { eager: true })}</div>
             <div class="detail-copy"><p class="eyebrow">JM ${escapeHtml(album.id)} · ${this.chapters.length > 1 ? "系列作品" : "单篇作品"}</p>
                 <h1 class="detail-title">${escapeHtml(album.name)}</h1>
-                <div class="detail-byline"><span class="detail-authors">${preferenceAuthorsHtml(authorsOf(album), undefined, { link: true })}</span><button class="btn btn-ghost btn-sm" type="button" data-translate aria-pressed="false">${icon("translate")}<span>翻译标题</span></button></div>
+                <div class="detail-byline"><span class="detail-authors">${preferenceAuthorsHtml(authorsOf(album), undefined, { link: true })}</span><span class="detail-byline-actions"><button class="btn btn-ghost btn-sm" type="button" data-manage-preferences aria-pressed="false">${icon("sliders")}<span>管理偏好</span></button><button class="btn btn-ghost btn-sm" type="button" data-translate aria-pressed="false">${icon("translate")}<span>翻译标题</span></button></span></div>
                 <div class="tag-list detail-tags">${preferenceTagsHtml(album.tags)}</div>
                 <p class="detail-description">${escapeHtml(asText(album.description, "暂无作品简介"))}</p>
                 <dl class="detail-stats"><div><dt>章节</dt><dd>${this.chapters.length}</dd></div><div><dt>页数</dt><dd>${escapeHtml(album.total_photos ?? "—")}</dd></div><div><dt>观看</dt><dd>${formatCount(album.total_views)}</dd></div><div><dt>喜欢</dt><dd>${formatCount(album.likes)}</dd></div></dl>
@@ -69,6 +72,42 @@ class ChapterPage {
 
     bind() {
         this.root.querySelector("[data-translate]").onclick = () => this.translate();
+        this.root.querySelector("[data-manage-preferences]").onclick = () => this.toggleManaging();
+        this.root.querySelector(".detail-copy").addEventListener("click", (event) => {
+            const target = event.target.closest("[data-manage-preference]");
+            if (target) this.cyclePreference(target.dataset.managePreference, target.dataset.name);
+        });
+    }
+
+    renderPreferences() {
+        const preferences = this.preferences || preferenceMaps(null);
+        const manage = Boolean(this.managing);
+        this.root.querySelector(".detail-authors").innerHTML = preferenceAuthorsHtml(authorsOf(this.album), preferences.authors, { link: true, manage });
+        this.root.querySelector(".detail-tags").innerHTML = preferenceTagsHtml(this.album.tags, preferences.tags, { manage });
+        this.root.querySelector(".detail-copy").classList.toggle("is-managing-preferences", manage);
+        const button = this.root.querySelector("[data-manage-preferences]");
+        button.setAttribute("aria-pressed", String(manage));
+        button.querySelector("span").textContent = manage ? "完成" : "管理偏好";
+    }
+
+    toggleManaging() {
+        this.managing = !this.managing;
+        this.renderPreferences();
+        if (this.managing) showToast("点击标签或作者切换偏好");
+    }
+
+    /** Step a tag or author to its next stance (… → no stance → first stance) and save it. */
+    async cyclePreference(kind, name) {
+        if (!name || this.savingPreference) return;
+        const map = (this.preferences || preferenceMaps(null))[`${kind}s`];
+        const level = nextLevel(map.get(name), kind === "tag" ? TAG_LEVELS : AUTHOR_LEVELS);
+        this.savingPreference = true;
+        try {
+            this.preferences = preferenceMaps(await libraryStore.savePreference({ kind, name, level }));
+            this.renderPreferences();
+            this.root.querySelector(`[data-manage-preference="${kind}"][data-name="${CSS.escape(name)}"]`)?.focus({ preventScroll: true });
+        } catch (error) { showToast(`保存失败：${error.message}`, "warning"); }
+        finally { this.savingPreference = false; }
     }
 
     renderChapters() {

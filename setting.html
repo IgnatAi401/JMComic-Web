@@ -13,11 +13,19 @@
 <body data-page="setting" class="">
     <a class="skip-link" href="#main">跳到主要内容</a>
     <main class="app-main" id="main" tabindex="-1"><div class="page setting-page">
-        <header class="page-head"><div class="page-head-copy"><span class="eyebrow">按你的习惯</span><h1 class="page-title">设置</h1><p class="page-lede">纯静态版本：阅读设置、历史与缓存都只保存在当前浏览器。</p></div></header>
+        <header class="page-head"><div class="page-head-copy"><span class="eyebrow">按你的习惯</span><h1 class="page-title">设置</h1><p class="page-lede">纯静态版本：阅读设置、偏好、历史与缓存都只保存在当前浏览器。</p></div></header>
         <div class="settings-stack">
             <section class="settings-section" aria-labelledby="settings-reading-title">
                 <div class="settings-section-head"><h2 class="settings-section-title" id="settings-reading-title">阅读体验</h2><p class="settings-section-note">仅保存在此设备</p></div>
                 <div class="group settings-reading" id="settings-reading"></div>
+            </section>
+            <section class="settings-section" aria-labelledby="settings-tag-title">
+                <div class="settings-section-head"><h2 class="settings-section-title" id="settings-tag-title">标签偏好</h2><p class="settings-section-note">首页和详情页按这里的设置为标签着色</p></div>
+                <div class="group preference-card" id="settings-tag-preferences"></div>
+            </section>
+            <section class="settings-section" aria-labelledby="settings-author-title">
+                <div class="settings-section-head"><h2 class="settings-section-title" id="settings-author-title">作者偏好</h2><p class="settings-section-note">首页和详情页按这里的设置标记作者</p></div>
+                <div class="group preference-card" id="settings-author-preferences"></div>
             </section>
             <section class="settings-section" aria-labelledby="settings-data-title">
                 <div class="settings-section-head"><h2 class="settings-section-title" id="settings-data-title">浏览器数据</h2><p class="settings-section-note">全部保存在当前浏览器</p></div>

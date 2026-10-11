@@ -5,7 +5,7 @@ import { coverHtml, hydrateCovers } from "../ui/covers.js";
 import { asText, authorsOf, detailUrl, escapeHtml, formatDateTime, searchUrl, textList } from "../ui/dom.js";
 import { icon } from "../ui/icons.js";
 import { hydrateRichCards } from "../ui/rich-cards.js";
-import { loadPreferences, preferenceAuthorsHtml, preferenceTagsHtml } from "../ui/preferences.js";
+import { loadPreferences, preferenceAuthorsHtml, preferenceLegendHtml, preferenceTagsHtml } from "../ui/preferences.js";
 import { mountShell } from "../ui/shell.js";
 import { renderPageError, stateHtml } from "../ui/states.js";
 import { showToast } from "../ui/toast.js";
@@ -305,7 +305,7 @@ async function renderShelves() {
         root.innerHTML = stateHtml({ title: "今天的书架还是空的", message: "稍后再来看看，或者去分类里逛逛。", action: { href: "./categories.html", label: "浏览分类" } });
         return;
     }
-    root.innerHTML = sections.map((section, sectionIndex) => {
+    root.innerHTML = preferenceLegendHtml(preferences) + sections.map((section, sectionIndex) => {
         const title = cleanLabel(section.title);
         const slug = displaySlug(section.slug);
         const heading = slug || title || "精选";
