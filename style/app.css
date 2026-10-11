@@ -1318,6 +1318,58 @@ a.cover:active { transform: scale(0.98); }
 .navigation-drawer .sheet-body { flex: 1; padding-inline: max(20px, var(--safe-left)) max(20px, var(--safe-right)); }
 .navigation-drawer .nav-item { flex-direction: row; justify-content: flex-start; width: 100%; }
 
+/* Changelog: a centred dialog on every size; close top-right, dismiss bottom-right. */
+.changelog-sheet {
+    align-items: center;
+    padding: calc(var(--safe-top) + 16px) calc(var(--safe-right) + 16px) calc(var(--safe-bottom) + 16px) calc(var(--safe-left) + 16px);
+    z-index: 45;
+}
+.changelog-sheet .sheet-panel {
+    width: min(520px, 100%);
+    max-height: min(640px, 100%);
+    border-radius: var(--r-xl);
+    transform: translateY(10px) scale(0.985);
+    opacity: 0;
+    transition: transform var(--t-med) var(--ease-out), opacity var(--t-med) var(--ease);
+}
+.changelog-sheet.is-open .sheet-panel { transform: none; opacity: 1; }
+.changelog-sheet .sheet-grabber { display: none; }
+.changelog-sheet .sheet-head { padding: 14px 12px 6px 20px; }
+.changelog-sheet .sheet-body { padding: 4px 20px 16px; }
+.changelog-footer {
+    display: flex;
+    justify-content: flex-end;
+    flex: none;
+    padding: 10px 12px 12px;
+    border-top: 1px solid var(--line);
+}
+.changelog-footer[hidden] { display: none; }
+.changelog-list { display: grid; gap: 10px; }
+.changelog-entry {
+    padding: 14px 16px;
+    border-radius: var(--r-lg);
+    background: var(--surface);
+    box-shadow: var(--line-inset);
+}
+.changelog-entry-head { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 10px; margin-bottom: 8px; }
+.changelog-version { font: 650 15px/1.3 var(--font-display); font-variant-numeric: tabular-nums; }
+.changelog-latest {
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: var(--accent-soft);
+    color: var(--accent-text);
+    font-size: 12px;
+    font-weight: 600;
+}
+.changelog-date { margin-left: auto; color: var(--text-3); font-size: 12.5px; font-variant-numeric: tabular-nums; }
+.changelog-items { display: grid; gap: 4px; padding-left: 1.2em; list-style: disc; color: var(--text-2); font-size: 14px; line-height: 1.6; }
+.changelog-items li::marker { color: var(--text-3); }
+@media (min-width: 700px) {
+    .changelog-sheet .sheet-head { padding: 16px 14px 8px 24px; }
+    .changelog-sheet .sheet-body { padding: 4px 24px 18px; }
+    .changelog-footer { padding-inline: 16px; }
+}
+
 /* Action list used in the compact "more" sheet */
 .action-grid {
     display: grid;

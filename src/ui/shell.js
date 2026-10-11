@@ -1,5 +1,6 @@
 import { setting } from "../core/Setting.js";
 import { openInNewPage } from "../utils/NavigationPolicy.js";
+import { maybeShowChangelog } from "./changelog.js";
 import { pageName, searchUrl } from "./dom.js";
 import { icon } from "./icons.js";
 import { Sheet } from "./overlay.js";
@@ -33,6 +34,7 @@ class AppShell {
         if (chrome) {
             this.renderNavigation();
             this.bindShortcuts();
+            maybeShowChangelog();
         }
         return this;
     }
