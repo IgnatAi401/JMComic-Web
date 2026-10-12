@@ -5,6 +5,8 @@ const LISTS = {
     reading: { key: "jm_reading_history_v2", limit: 200 },
     random: { key: "jm_random_history_v1", limit: 200 },
     later: { key: "jm_watch_later_v1", limit: 500 },
+    favorites: { key: "jm_favorites_v1", limit: 2000 },
+    tracking: { key: "jm_tracking_v1", limit: 500 },
 };
 
 /** Tag and author stances live beside the lists, as `{ tags, authors }` maps of name → level. */
@@ -54,6 +56,20 @@ function normalizeRandomAlbum(album) {
     };
 }
 
+/**
+ * A tracked series also remembers its latest update (`updatedAt`, Unix seconds, from the
+ * album's `addtime`), when that was last checked, and when the user last opened it.
+ */
+function normalizeTrackedAlbum(album, previous = null) {
+    const now = Date.now();
+    return {
+        ...normalizeRandomAlbum({ ...album, savedAt: previous?.savedAt || now }),
+        updatedAt: Number(album.addtime) || Number(previous?.updatedAt) || 0,
+        checkedAt: now,
+        viewedAt: Number(album.viewedAt) || Number(previous?.viewedAt) || now,
+    };
+}
+
 function readPreferences() {
     let value;
     try { value = JSON.parse(readLocalStorage(PREFERENCES_KEY, "{}")); } catch { value = null; }
@@ -66,7 +82,7 @@ function readPreferences() {
 }
 
 class LibraryStore {
-    lists = { reading: [], random: [], later: [] };
+    lists = { reading: [], random: [], later: [], favorites: [], tracking: [] };
     preferences = { tags: {}, authors: {} };
     loaded = false;
 
@@ -93,7 +109,14 @@ class LibraryStore {
     getHistory() { this.init(); return this.lists.reading; }
     getRandomHistory() { this.init(); return this.lists.random; }
     getWatchLater() { this.init(); return this.lists.later; }
-    isWatchLater(id) { this.init(); return this.lists.later.some((item) => String(item.id) === String(id)); }
+    isWatchLater(id) { return this.#has("later", id); }
+    getFavorites() { this.init(); return this.lists.favorites; }
+    isFavorite(id) { return this.#has("favorites", id); }
+    getTracking() { this.init(); return this.lists.tracking; }
+    getTracked(id) { this.init(); return this.lists.tracking.find((item) => String(item.id) === String(id)) || null; }
+    isTracking(id) { return this.#has("tracking", id); }
+
+    #has(kind, id) { this.init(); return this.lists[kind].some((item) => String(item.id) === String(id)); }
 
     /** `clear === true` empties the list; a string `clear` removes only that comic id. */
     async #mutate(kind, items, clear = false) {
@@ -120,6 +143,38 @@ class LibraryStore {
     addWatchLater(album) { return this.#mutate("later", [normalizeRandomAlbum({ ...album, savedAt: Date.now() })]); }
     removeWatchLater(id) { return this.#mutate("later", [], String(id)); }
     clearWatchLater() { return this.#mutate("later", [], true); }
+    addFavorite(album) { return this.#mutate("favorites", [normalizeRandomAlbum({ ...album, savedAt: Date.now() })]); }
+    removeFavorite(id) { return this.#mutate("favorites", [], String(id)); }
+    clearFavorites() { return this.#mutate("favorites", [], true); }
+    addTracking(album) { return this.#mutate("tracking", [normalizeTrackedAlbum({ ...album, viewedAt: Date.now() })]); }
+    removeTracking(id) { return this.#mutate("tracking", [], String(id)); }
+    clearTracking() { return this.#mutate("tracking", [], true); }
+
+    /**
+     * Refresh tracked series from fresh album data without changing the list order.
+     * An album's `trackedId` names the entry it updates when that differs from its own id
+     * (an entry saved from a chapter page becomes its series). `{ viewed: true }` also marks
+     * the latest update as seen (the detail page was opened).
+     */
+    async refreshTracking(albums, { viewed = false } = {}) {
+        this.init();
+        const fresh = new Map(albums.filter((album) => album?.id != null).map((album) => [String(album.trackedId ?? album.id), album]));
+        if (!fresh.size) return;
+        // Start from storage so a change made in another tab is not overwritten.
+        const current = readList(LISTS.tracking.key);
+        if (!current.some((item) => fresh.has(String(item.id)))) return;
+        const seen = new Set();
+        const next = current.map((item) => {
+            const album = fresh.get(String(item.id));
+            if (!album) return item;
+            const updated = normalizeTrackedAlbum(album, item);
+            if (viewed) updated.viewedAt = Date.now();
+            return updated;
+        }).filter((item) => !seen.has(String(item.id)) && seen.add(String(item.id)));
+        if (!writeLocalStorage(LISTS.tracking.key, JSON.stringify(next))) throw new Error("浏览器存储不可用或已满");
+        this.lists.tracking = next;
+        this.#notify();
+    }
 
     getPreferences() { this.init(); return this.preferences; }
 

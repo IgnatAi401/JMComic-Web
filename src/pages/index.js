@@ -9,6 +9,7 @@ import { loadPreferences, preferenceAuthorsHtml, preferenceLegendHtml, preferenc
 import { mountShell } from "../ui/shell.js";
 import { renderPageError, stateHtml } from "../ui/states.js";
 import { showToast } from "../ui/toast.js";
+import { checkTrackingUpdates, hasUpdate, trackedByUpdate, updatedLabel } from "../ui/tracking.js";
 import { syncWatchLaterButtons } from "../ui/watch-later.js";
 
 const MAX_RANDOM_ATTEMPTS = 12;
@@ -233,7 +234,9 @@ const sideAuthorHtml = (item) => {
     return author ? `<a class="author-name" href="${searchUrl(author)}">${escapeHtml(author)}</a>` : "未知作者";
 };
 
-function renderSideList(section, items, { removable = false } = {}) {
+const savedMeta = (item) => (item.savedAt ? formatDateTime(item.savedAt) : "");
+
+function renderSideList(section, items, { removable = false, meta = savedMeta, highlight = () => false } = {}) {
     section.hidden = !items.length;
     const side = section.closest(".home-side");
     side.hidden = [...side.querySelectorAll(".continue")].every((node) => node.hidden);
@@ -241,11 +244,11 @@ function renderSideList(section, items, { removable = false } = {}) {
     section.querySelector(".continue-list").innerHTML = items.map((item) => {
         const title = asText(item.name ?? item.title, "未命名作品");
         const href = detailUrl(item.id);
-        return `<li class="continue-item${removable ? " later-item" : ""}">
+        return `<li class="continue-item${removable ? " later-item" : ""}${highlight(item) ? " is-highlight" : ""}">
             ${coverHtml(item, { href })}
             <div class="continue-copy">
                 <a class="continue-title" href="${href}">${escapeHtml(title)}</a>
-                <span class="continue-meta">${sideAuthorHtml(item)}${item.savedAt ? ` · ${escapeHtml(formatDateTime(item.savedAt))}` : ""}</span>
+                <span class="continue-meta">${sideAuthorHtml(item)}${meta(item) ? ` · ${escapeHtml(meta(item))}` : ""}</span>
             </div>
             ${removable ? `<button class="later-remove" type="button" data-later-remove="${escapeHtml(item.id)}" aria-label="从稍后再看移除《${escapeHtml(title)}》" title="移除">${icon("close")}</button>` : ""}
         </li>`;
@@ -255,6 +258,13 @@ function renderSideList(section, items, { removable = false } = {}) {
 
 function renderContinueReading() {
     renderSideList(document.querySelector(".continue.reading"), libraryStore.getHistory().slice(0, 8));
+}
+
+function renderTracking() {
+    renderSideList(document.querySelector(".continue.tracking"), trackedByUpdate().slice(0, 8), {
+        meta: (item) => `${hasUpdate(item) ? "有更新 · " : ""}更新于 ${updatedLabel(item.updatedAt)}`,
+        highlight: hasUpdate,
+    });
 }
 
 function renderWatchLater() {
@@ -276,6 +286,7 @@ function bindWatchLater() {
     });
     window.addEventListener("jm-library-change", () => {
         renderWatchLater();
+        renderTracking();
         renderContinueReading();
     });
 }
@@ -333,7 +344,11 @@ class HomePage {
         await Promise.all([
             random.init()
                 .catch((error) => { document.querySelector("[data-random-status]").textContent = error.message || "随机历史暂时不可用"; })
-                .finally(() => { renderWatchLater(); renderContinueReading(); }),
+                .finally(() => {
+                    renderWatchLater(); renderTracking(); renderContinueReading();
+                    // Stale series are re-checked quietly; the list re-renders on change.
+                    checkTrackingUpdates().catch(() => {});
+                }),
             renderShelves().catch((error) => renderPageError(".shelves", error, { title: "书架加载失败", action: null })),
         ]);
     }

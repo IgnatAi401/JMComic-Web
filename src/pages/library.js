@@ -7,15 +7,19 @@ import { confirmAction } from "../ui/confirm.js";
 import { showToast } from "../ui/toast.js";
 import { libraryStore } from "../data/LibraryStore.js";
 import { renderPageError } from "../ui/states.js";
+import { checkTrackingUpdates, hasUpdate, trackedByUpdate, updatedLabel } from "../ui/tracking.js";
 
 const VIEWS = {
+    favorites: { name: "收藏", clear: "收藏", note: "在作品详情页点“收藏”即可加入或取消。" },
     history: { name: "最近阅读", clear: "阅读历史", note: "" },
+    tracking: { name: "追踪连载", clear: "追踪连载", note: "在多章节作品详情页点“追踪连载”即可加入；按最后更新时间排序。" },
     later: { name: "稍后再看", clear: "稍后再看", note: "点卡片右上角的时钟按钮即可加入或移出稍后再看。" },
     random: { name: "随机历史", clear: "随机历史", note: "这里保留在发现页验证通过的随机作品。" },
 };
 
 class LibraryPage {
     view = "history";
+    checkingTracking = false;
 
     async init() {
         mountShell();
@@ -32,6 +36,8 @@ class LibraryPage {
         document.querySelectorAll(".library-tabs button").forEach((button) => {
             button.addEventListener("click", () => this.selectView(button.dataset.view, { updateUrl: true }));
         });
+        this.checkButton = document.querySelector(".check-updates");
+        this.checkButton.addEventListener("click", () => this.checkTracking({ force: true }));
         document.querySelector(".clear-history").addEventListener("click", async (event) => {
             const button = event.currentTarget;
             const name = VIEWS[this.view].clear;
@@ -40,6 +46,8 @@ class LibraryPage {
             try {
                 if (this.view === "random") await libraryStore.clearRandomHistory();
                 else if (this.view === "later") await libraryStore.clearWatchLater();
+                else if (this.view === "favorites") await libraryStore.clearFavorites();
+                else if (this.view === "tracking") await libraryStore.clearTracking();
                 else await libraryStore.clearHistory();
                 showToast(`${name}已清空`);
             } catch (error) {
@@ -60,8 +68,9 @@ class LibraryPage {
         const clearButton = document.querySelector(".clear-history");
         clearButton.hidden = false;
         clearButton.textContent = `清空${VIEWS[view].clear}`;
+        this.checkButton.hidden = view !== "tracking";
         this.notice.className = "library-notice";
-        this.notice.textContent = VIEWS[view].note;
+        this.notice.textContent = this.checkingTracking && view === "tracking" ? this.notice.textContent : VIEWS[view].note;
         if (updateUrl) {
             const url = new URL(window.location.href);
             url.searchParams.set("view", view);
@@ -69,19 +78,60 @@ class LibraryPage {
             window.history.replaceState({}, "", url);
         }
         this.render();
+        if (view === "tracking") this.checkTracking();
+    }
+
+    /** Check tracked series for new chapters; stale ones only, unless `force`. */
+    async checkTracking({ force = false } = {}) {
+        if (this.checkingTracking) return;
+        this.checkingTracking = true;
+        this.checkButton.disabled = true;
+        try {
+            const { checked, failed, total } = await checkTrackingUpdates({
+                force,
+                onProgress: (done, count) => {
+                    if (this.view === "tracking") this.notice.textContent = `正在检查更新 ${done} / ${count}…`;
+                },
+            });
+            if (total && this.view === "tracking") {
+                const updates = libraryStore.getTracking().filter(hasUpdate).length;
+                this.notice.textContent = `已检查 ${checked} 部${updates ? `，${updates} 部有更新` : ""}${failed ? `，${failed} 部检查失败` : ""}。`;
+                this.notice.classList.toggle("warning", failed > 0);
+            }
+        } catch (error) {
+            if (this.view === "tracking") {
+                this.notice.textContent = error.message || "检查更新失败，请稍后重试";
+                this.notice.classList.add("warning");
+            }
+        } finally {
+            this.checkingTracking = false;
+            this.checkButton.disabled = false;
+        }
+    }
+
+    items() {
+        if (this.view === "tracking") return trackedByUpdate();
+        return this.view === "random" ? libraryStore.getRandomHistory()
+            : this.view === "later" ? libraryStore.getWatchLater()
+                : this.view === "favorites" ? libraryStore.getFavorites() : libraryStore.getHistory();
+    }
+
+    meta(item) {
+        if (this.view === "tracking") {
+            return { meta: `${hasUpdate(item) ? "有更新 · " : ""}最后更新 ${updatedLabel(item.updatedAt)} · 共 ${Number(item.chapters) || 1} 章`, highlight: hasUpdate(item) };
+        }
+        return { meta: item.savedAt ? new Date(item.savedAt).toLocaleDateString("zh-CN") : "" };
     }
 
     render() {
-        const items = this.view === "random" ? libraryStore.getRandomHistory()
-            : this.view === "later" ? libraryStore.getWatchLater() : libraryStore.getHistory();
+        const items = this.items();
         document.querySelector(".sync-state").textContent = `${VIEWS[this.view].name} · ${items.length}`;
         if (!items.length) {
-            this.grid.innerHTML = stateHtml({ title: "这里暂时没有作品", message: "开始阅读或把作品加入稍后再看。", action: { label: "去发现", href: "./index.html" } });
+            this.grid.innerHTML = stateHtml({ title: "这里暂时没有作品", message: this.view === "favorites" ? "在作品详情页点“收藏”即可加入。"
+                : this.view === "tracking" ? "在多章节作品详情页点“追踪连载”即可加入。" : "开始阅读或把作品加入稍后再看。", action: { label: "去发现", href: "./index.html" } });
             return;
         }
-        this.grid.innerHTML = items.map((item) => comicCardHtml(item, {
-            meta: item.savedAt ? new Date(item.savedAt).toLocaleDateString("zh-CN") : "",
-        })).join("");
+        this.grid.innerHTML = items.map((item) => comicCardHtml(item, this.meta(item))).join("");
         hydrateCovers(this.grid);
         hydrateRichCards(this.grid);
     }

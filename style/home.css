@@ -217,6 +217,7 @@
 }
 .continue-meta { overflow: hidden; color: var(--text-3); font-size: 12px; white-space: nowrap; text-overflow: ellipsis; }
 .continue-meta .author-name { color: inherit; }
+.continue-item.is-highlight .continue-meta { color: var(--accent-text); }
 .later-item { grid-template-columns: 52px minmax(0, 1fr) auto; }
 .later-remove {
     display: grid;
