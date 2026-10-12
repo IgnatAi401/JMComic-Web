@@ -185,7 +185,7 @@ body[data-page="history-migration"] { --nav-w: 0px; --tabbar-h: 0px; }
     .notification-item { flex-wrap: wrap; }
     .notification-item time { margin-left: 18px; }
     .detail-actions > .btn-primary { flex: 1 1 100%; }
-    .library-tabs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); width: 100%; }
+    .library-tabs { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); width: 100%; }
     .library-tabs button { padding-inline: 6px; font-size: 12px; }
 }
 

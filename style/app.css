@@ -1126,6 +1126,7 @@ a.cover:active { transform: scale(0.98); }
 .rich-card[data-author-preference="like"] { box-shadow: inset 0 0 0 1.5px var(--success); }
 .rich-card[data-author-preference="dislike"] { box-shadow: inset 0 0 0 1.5px var(--error); }
 .rich-card .rich-note { color: var(--text-2); }
+.rich-card .rich-note.is-highlight { color: var(--accent-text); font-weight: 600; }
 .rich-stats {
     display: grid;
     grid-template-columns: repeat(3, auto);

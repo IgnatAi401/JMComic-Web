@@ -14,6 +14,7 @@ import { AUTHOR_LEVELS, TAG_LEVELS, loadPreferences, nextLevel, preferenceAuthor
 import { icon } from "../ui/icons.js";
 import { renderPageError } from "../ui/states.js";
 import { showToast } from "../ui/toast.js";
+import { seriesAlbumOf, seriesIdOf } from "../ui/tracking.js";
 import { watchLaterButtonHtml } from "../ui/watch-later.js";
 
 const links = (values) => textList(values).map((value) => `<a class="tag" href="${searchUrl(value)}">${escapeHtml(value)}</a>`).join("");
@@ -24,7 +25,12 @@ class ChapterPage {
         const id = new URLSearchParams(location.search).get("id");
         if (!/^\d+$/.test(id || "")) throw new Error("漫画 ID 无效");
         await jmApi.init();
-        const album = await jmApi.getComicAlbum(id);
+        await libraryStore.init();
+        let album = await jmApi.getComicAlbum(id);
+        this.seriesId = seriesIdOf(album);
+        // A tracked series skips the 7-day album cache so new chapters show up at once.
+        const tracked = this.isTracking(id);
+        if (tracked) album = await jmApi.getComicAlbum(id, { refresh: true }).catch(() => album);
         if (!album?.id || !asText(album.name)) throw new Error("没有找到这本作品");
         this.album = album;
         this.chapters = chaptersOf(album);
@@ -34,11 +40,14 @@ class ChapterPage {
         this.render();
         this.bind();
         this.renderChapters();
+        this.renderLibraryStates();
+        if (tracked) this.markTrackedViewed().catch(() => {});
         loadPreferences().then((preferences) => { this.preferences = preferences; this.renderPreferences(); });
         // Another tab may edit stances; skip our own saves, which already re-rendered.
         window.addEventListener("jm-library-change", () => {
             if (this.savingPreference) return;
             loadPreferences().then((preferences) => { this.preferences = preferences; this.renderPreferences(); });
+            this.renderLibraryStates();
         });
         const first = this.chapters[0];
         new PagePreview(this.root.querySelector(".detail-preview"), album, { id: first.id, label: this.chapters.length > 1 ? "第 1 章" : "全篇" }).mount();
@@ -55,7 +64,7 @@ class ChapterPage {
                 <div class="tag-list detail-tags">${preferenceTagsHtml(album.tags)}</div>
                 <p class="detail-description">${escapeHtml(asText(album.description, "暂无作品简介"))}</p>
                 <dl class="detail-stats"><div><dt>章节</dt><dd>${this.chapters.length}</dd></div><div><dt>页数</dt><dd>${escapeHtml(album.total_photos ?? "—")}</dd></div><div><dt>观看</dt><dd>${formatCount(album.total_views)}</dd></div><div><dt>喜欢</dt><dd>${formatCount(album.likes)}</dd></div></dl>
-                <div class="detail-actions"><a class="btn btn-primary" data-start-read data-navigation="same-tab">${icon("play")}开始阅读</a>${watchLaterButtonHtml(album)}</div>
+                <div class="detail-actions"><a class="btn btn-primary" data-start-read data-navigation="same-tab">${icon("play")}开始阅读</a>${watchLaterButtonHtml(album)}<button class="btn btn-outline" data-library-action="favorite" type="button" aria-pressed="false">${icon("bookmark")}<span>收藏</span></button><button class="btn btn-ghost" data-library-action="track" type="button" aria-pressed="false" ${this.chapters.length <= 1 ? "hidden" : ""}>${icon("track")}<span>追踪连载</span></button></div>
             </div></header>
             <div class="detail-layout"><div class="detail-primary">
                 <section class="section detail-preview" aria-labelledby="preview-title"><div class="section-head"><h2 class="section-title" id="preview-title">内容预览</h2><span class="section-meta" data-preview-meta></span></div><div class="preview-strip" data-navigation-scope="same-tab"><span class="preview-page" data-state="loading"></span><span class="preview-page" data-state="loading"></span><span class="preview-page" data-state="loading"></span></div></section>
@@ -73,6 +82,7 @@ class ChapterPage {
     bind() {
         this.root.querySelector("[data-translate]").onclick = () => this.translate();
         this.root.querySelector("[data-manage-preferences]").onclick = () => this.toggleManaging();
+        this.root.querySelectorAll("[data-library-action]").forEach((button) => { button.onclick = () => this.libraryAction(button); });
         this.root.querySelector(".detail-copy").addEventListener("click", (event) => {
             const target = event.target.closest("[data-manage-preference]");
             if (target) this.cyclePreference(target.dataset.managePreference, target.dataset.name);
@@ -117,6 +127,45 @@ class ChapterPage {
         const start = this.root.querySelector("[data-start-read]");
         start.href = readerUrl(selected.id, this.album.id);
         start.innerHTML = `${icon("play")}${last ? "继续阅读" : "开始阅读"}`;
+    }
+
+    /** Tracking follows the series, also from a chapter page; older entries may hold the chapter id. */
+    isTracking(id = this.album.id) { return libraryStore.isTracking(this.seriesId) || libraryStore.isTracking(id); }
+
+    async markTrackedViewed() {
+        const series = await seriesAlbumOf(this.album, { refresh: true });
+        const trackedId = libraryStore.isTracking(this.seriesId) ? this.seriesId : String(this.album.id);
+        await libraryStore.refreshTracking([{ ...series, trackedId }], { viewed: true });
+    }
+
+    renderLibraryStates() {
+        const states = { favorite: [libraryStore.isFavorite(this.album.id), "收藏", "已收藏"], track: [this.isTracking(), "追踪连载", "正在追更"] };
+        Object.entries(states).forEach(([action, [active, off, on]]) => {
+            const button = this.root.querySelector(`[data-library-action="${action}"]`);
+            button.setAttribute("aria-pressed", String(active)); button.querySelector("span").textContent = active ? on : off;
+        });
+    }
+
+    /** Favorites and tracked series are kept in this browser, beside the reading history. */
+    async libraryAction(button) {
+        if (button.disabled) return;
+        button.disabled = true;
+        const id = this.album.id;
+        const album = { ...this.album, name: this.originalTitle };
+        try {
+            if (button.dataset.libraryAction === "favorite") {
+                if (libraryStore.isFavorite(id)) { await libraryStore.removeFavorite(id); showToast("已取消收藏"); }
+                else { await libraryStore.addFavorite(album); showToast("已加入收藏"); }
+            } else if (this.isTracking()) {
+                await libraryStore.removeTracking(this.seriesId);
+                if (libraryStore.isTracking(id)) await libraryStore.removeTracking(id);
+                showToast("已取消追踪");
+            } else {
+                await libraryStore.addTracking(await seriesAlbumOf(album));
+                showToast("已开始追踪，可在书架查看更新");
+            }
+        } catch (error) { showToast(error.message || "保存失败，请重试", "warning"); }
+        finally { button.disabled = false; this.renderLibraryStates(); }
     }
 
     async translate() {
