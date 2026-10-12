@@ -19,12 +19,21 @@
 .reader-title { font: 550 13px/1.4 var(--font); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .reader-subtitle { color: var(--text-2); font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .reader-actions { display: grid; grid-template-columns: 1fr 1fr 1.4fr 1fr 1fr; align-items: center; padding-top: 4px; }
-.reader-images { width: min(100%, 900px); margin: 0 auto; overflow-anchor: none; }
-.reader-images > .reader-page { position: relative; min-height: 120px; background: #151519; }
-.reader-images > .reader-page[data-state="pending"], .reader-images > .reader-page[data-state="rendering"] { aspect-ratio: 600 / 1050; }
+/* Clip stray horizontal overflow so the strip never drifts sideways on touch screens. */
+.reader-body { overflow-x: clip; }
+/* Every page shares the column width, so slices of one strip line up seamlessly.
+ * `manipulation` drops double-tap zoom, which tap-to-toggle would otherwise trigger. */
+.reader-images { width: min(100%, 900px); margin: 0 auto; overflow-anchor: none; touch-action: manipulation; }
+.reader-images > .reader-page {
+    position: relative; width: 100%; background: #151519;
+    aspect-ratio: var(--reader-image-ratio, 0.5714285714);
+    /* Released pages keep their ratio; override their pixel heights on resize. */
+    height: auto !important;
+}
+.reader-images > .reader-page[data-state="error"] { aspect-ratio: auto; }
 .reader-images > .reader-page[data-state="pending"]::after, .reader-images > .reader-page[data-state="rendering"]::after { content: "正在载入第 " attr(data-page-number) " 页"; position: absolute; inset: 0; display: grid; place-items: center; color: var(--text-3); font-size: 12px; pointer-events: none; }
 .reader-page img, .reader-page canvas { display: block; width: 100%; height: auto; }
-.reader-page > div:not(.reader-image-error) { width: 100%; }
+.reader-images > .reader-page > div:not(.reader-image-error) { width: 100%; }
 .reader-image-error { min-height: 55svh; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 20px; padding: 24px; text-align: center; color: var(--text-2); }
 .reader-image-error button { min-height: 44px; background: var(--surface-3); border: 1px solid var(--line-strong); border-radius: var(--r-sm); padding: 10px 20px; }
 .reader-tool { display: flex; flex-direction: column; gap: 4px; align-items: center; justify-content: center; min-width: 0; min-height: 50px; border: 0; border-radius: var(--r-sm); color: var(--text-2); background: none; }
@@ -48,21 +57,15 @@
 .reader-body .toast-region { bottom: calc(var(--chrome-bottom) + 12px); }
 @media (hover: hover) { .reader-tool:hover { background: var(--hover); color: var(--text); } }
 @media (orientation: landscape) {
+    /* Size the column for a typical portrait page to fit the screen height;
+     * wide pages then stay at the same width instead of filling the screen. */
     .reader-images {
         --reader-fit-height: max(1px, calc(100svh - var(--safe-top) - var(--chrome-bottom) - 12px));
-        padding-inline: max(12px, var(--safe-left)) max(12px, var(--safe-right));
-    }
-    .reader-images > .reader-page {
-        width: min(100%, calc(var(--reader-fit-height) * var(--reader-image-ratio, 0.5714285714)));
-        min-height: 0;
-        /* Override released pages' pixel heights when the device rotates. */
-        height: auto !important;
-        aspect-ratio: var(--reader-image-ratio, 0.5714285714);
-        margin: 0 auto;
-    }
-    .reader-images > .reader-page[data-state="pending"],
-    .reader-images > .reader-page[data-state="rendering"] {
-        aspect-ratio: var(--reader-image-ratio, 0.5714285714);
+        --reader-column: clamp(420px, calc(var(--reader-fit-height) * 0.7), 900px);
+        --reader-gutter-left: max(12px, var(--safe-left));
+        --reader-gutter-right: max(12px, var(--safe-right));
+        width: min(100%, calc(var(--reader-column) + var(--reader-gutter-left) + var(--reader-gutter-right)));
+        padding-inline: var(--reader-gutter-left) var(--reader-gutter-right);
     }
 }
 @media (max-height: 500px) and (orientation: landscape) {
