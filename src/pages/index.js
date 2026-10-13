@@ -2,7 +2,7 @@ import { jmApi } from "../api/JmcomicApi.js";
 import { libraryStore } from "../data/LibraryStore.js";
 import { comicCardHtml } from "../ui/comic-card.js";
 import { coverHtml, hydrateCovers } from "../ui/covers.js";
-import { asText, authorsOf, detailUrl, escapeHtml, formatDateTime, searchUrl, textList } from "../ui/dom.js";
+import { asText, authorsOf, detailUrl, escapeHtml, formatCount, formatDateTime, searchUrl, textList } from "../ui/dom.js";
 import { icon } from "../ui/icons.js";
 import { hydrateRichCards } from "../ui/rich-cards.js";
 import { loadPreferences, preferenceAuthorsHtml, preferenceLegendHtml, preferenceTagsHtml } from "../ui/preferences.js";
@@ -122,7 +122,6 @@ class RandomPick {
         const tags = textList(album.tags).slice(0, 8);
         const chapters = Number(album.chapters || (Array.isArray(album.series) && album.series.length) || 1);
         const coverUrl = asText(album.cover_url || album.coverUrl, jmApi.getCoverImageURL(id));
-        const timestamp = Number(album.addtime);
         const href = detailUrl(id);
         const preferences = await loadPreferences();
 
@@ -143,12 +142,13 @@ class RandomPick {
         this.q("status").textContent = status;
         this.q("title").textContent = title;
         this.q("author").innerHTML = preferenceAuthorsHtml(authors, preferences.authors, { link: true, fallback: "未知作者" });
-        this.q("description").textContent = asText(album.description, "");
         this.q("chapters").textContent = String(chapters);
         this.q("pages").textContent = String(album.total_photos ?? "—");
-        this.q("comments").textContent = String(album.comment_total ?? "0");
-        this.q("date").textContent = timestamp ? new Date(timestamp * 1000).toLocaleDateString("zh-CN", { year: "numeric", month: "2-digit" }) : "—";
-        this.q("tags").innerHTML = preferenceTagsHtml(tags, preferences.tags);
+        // History saved before views/likes were recorded has neither field.
+        this.q("views").textContent = album.total_views == null ? "—" : formatCount(album.total_views);
+        this.q("likes").textContent = album.likes == null ? "—" : formatCount(album.likes);
+        // Rank the full tag list, so a liked tag past the first eight still makes the card.
+        this.q("tags").innerHTML = preferenceTagsHtml(album.tags, preferences.tags, { prioritize: true });
 
         const open = this.q("open");
         open.href = href;
@@ -194,10 +194,8 @@ class RandomPick {
     }
 
     animate(direction) {
-        const copy = this.root.querySelector(".random-copy");
-        const media = this.root.querySelector(".random-media");
         this.root.dataset.direction = direction;
-        [copy, media].forEach((node) => {
+        this.root.querySelectorAll(".random-cover, .random-copy, .random-stats, .random-tags").forEach((node) => {
             node.classList.remove("is-swapping");
             void node.offsetWidth;
             node.classList.add("is-swapping");
@@ -208,7 +206,7 @@ class RandomPick {
         if (this.loading || index < 0 || index >= this.history.length || index === this.currentIndex) return;
         const item = this.history[index];
         this.currentIndex = index;
-        this.render(item, String(item.id), { direction, status: `随机历史 · ${formatDateTime(item.savedAt)}` });
+        this.render(item, String(item.id), { direction });
     }
 
     renderPager() {
@@ -241,6 +239,7 @@ const savedMeta = (item) => (item.savedAt ? formatDateTime(item.savedAt) : "");
 function renderSideList(section, items, { removable = false, meta = savedMeta, highlight = () => false } = {}) {
     section.hidden = !items.length;
     const side = section.closest(".home-side");
+    side.removeAttribute("data-pending");
     side.hidden = [...side.querySelectorAll(".continue")].every((node) => node.hidden);
     if (!items.length) return;
     section.querySelector(".continue-list").innerHTML = items.map((item) => {

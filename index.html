@@ -26,40 +26,38 @@
             <div class="home-layout">
                 <section class="random" aria-labelledby="random-title" aria-busy="true">
                     <div class="random-backdrop" aria-hidden="true"><img alt="" /></div>
-                    <div class="random-media">
-                        <a class="cover random-cover" data-random-cover aria-disabled="true"><img alt="" /></a>
-                        <div class="random-pager">
-                            <button class="icon-btn" type="button" data-random-prev aria-label="上一本（较早的随机结果）" disabled><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m15 6-6 6 6 6"/></svg></button>
-                            <span class="random-position mono" data-random-position aria-live="polite">—</span>
-                            <button class="icon-btn" type="button" data-random-next aria-label="下一本（较新的随机结果）" disabled><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg></button>
-                        </div>
-                    </div>
-                    <div class="random-copy">
+                    <div class="random-head">
                         <p class="random-kicker">
                             <span class="random-label">随机一本</span>
                             <span class="mono" data-random-id>JM ———</span>
-                            <span class="random-status" data-random-status>正在抽取</span>
                         </p>
+                        <div class="random-pager">
+                            <button class="icon-btn" type="button" data-random-prev aria-label="上一本（较早的随机结果）" disabled><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m15 6-6 6 6 6"/></svg></button>
+                            <a class="random-history" href="./library.html?view=random" data-navigation="same-tab" title="查看随机历史"><span class="mono" data-random-position aria-live="polite">—</span></a>
+                            <button class="icon-btn" type="button" data-random-next aria-label="下一本（较新的随机结果）" disabled><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg></button>
+                        </div>
+                    </div>
+                    <a class="cover random-cover" data-random-cover aria-disabled="true"><img alt="" /></a>
+                    <div class="random-copy">
                         <h2 class="random-title" id="random-title" data-random-title>正在寻找一本有效的作品…</h2>
                         <p class="random-author" data-random-author>&nbsp;</p>
-                        <p class="random-description" data-random-description></p>
-                        <div class="tag-list random-tags" data-random-tags></div>
-                        <dl class="random-stats">
-                            <div><dt>章节</dt><dd class="num" data-random-chapters>—</dd></div>
-                            <div><dt>页数</dt><dd class="num" data-random-pages>—</dd></div>
-                            <div><dt>评论</dt><dd class="num" data-random-comments>—</dd></div>
-                            <div><dt>发布</dt><dd class="num" data-random-date>—</dd></div>
-                        </dl>
-                        <div class="random-actions">
-                            <a class="btn btn-primary" data-random-open aria-disabled="true">查看详情</a>
-                            <button class="btn btn-outline" type="button" data-random-trigger><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h4v4"/><path d="M4 20 20 4"/><path d="M20 16v4h-4"/><path d="m15 15 5 5"/><path d="M4 4l5 5"/></svg><span data-random-trigger-label>换一本</span></button>
-                            <button class="btn btn-outline" type="button" data-random-later disabled><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg><span>稍后再看</span></button>
-                            <a class="btn btn-ghost" href="./library.html?view=random" data-navigation="same-tab">随机历史</a>
-                        </div>
+                        <p class="random-status" data-random-status>正在抽取</p>
+                    </div>
+                    <dl class="random-stats">
+                        <div><dt>章节</dt><dd class="num" data-random-chapters>—</dd></div>
+                        <div><dt>页数</dt><dd class="num" data-random-pages>—</dd></div>
+                        <div><dt>观看</dt><dd class="num" data-random-views>—</dd></div>
+                        <div><dt>喜欢</dt><dd class="num" data-random-likes>—</dd></div>
+                    </dl>
+                    <div class="tag-list random-tags" data-random-tags></div>
+                    <div class="random-actions">
+                        <a class="btn btn-primary" data-random-open aria-disabled="true">查看详情</a>
+                        <button class="btn btn-outline" type="button" data-random-trigger><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h4v4"/><path d="M4 20 20 4"/><path d="M20 16v4h-4"/><path d="m15 15 5 5"/><path d="M4 4l5 5"/></svg><span data-random-trigger-label>换一本</span></button>
+                        <button class="btn btn-outline" type="button" data-random-later disabled><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg><span>稍后再看</span></button>
                     </div>
                 </section>
 
-                <div class="home-side">
+                <div class="home-side" data-pending>
                     <section class="section continue later" aria-labelledby="later-title" hidden>
                         <div class="section-head">
                             <h2 class="section-title" id="later-title">稍后再看</h2>
