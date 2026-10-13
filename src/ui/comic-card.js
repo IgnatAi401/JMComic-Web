@@ -5,6 +5,9 @@ import { preferenceAuthorsHtml } from "./preferences.js";
 import { watchLaterButtonHtml } from "./watch-later.js";
 
 // [field, label, icon]: one compact row; the label stays readable to screen readers and on hover.
+// Authors named on a card; the rest fold into "+N" so a long list never grows the card.
+export const CARD_AUTHORS = 2;
+
 const RICH_STATS = [["chapters", "章节", "list"], ["pages", "页数", "pages"], ["views", "观看", "eye"], ["likes", "喜欢", "heart"], ["date", "发布", ""]];
 
 /**
@@ -21,7 +24,7 @@ export const comicCardHtml = (comic, { meta = "", highlight = false } = {}) => {
         ${coverHtml(comic, { href })}
         <div class="rich-card-body">
             <h3 class="comic-title"><a href="${href}">${escapeHtml(title)}</a></h3>
-            <p class="comic-meta"><span data-detail="authors">${preferenceAuthorsHtml(authorsOf(comic), undefined, { link: true })}</span>${category ? ` · ${escapeHtml(category)}` : ""}</p>
+            <p class="comic-meta"><span data-detail="authors">${preferenceAuthorsHtml(authorsOf(comic), undefined, { link: true, limit: CARD_AUTHORS })}</span>${category ? ` · ${escapeHtml(category)}` : ""}</p>
             ${meta ? `<p class="comic-meta rich-note${highlight ? " is-highlight" : ""}">${escapeHtml(meta)}</p>` : ""}
             <div class="tag-list rich-tags" data-detail="tags" aria-live="polite"></div>
             <dl class="rich-stats">${RICH_STATS.map(([key, label, glyph]) => `<div title="${label}"><dt class="visually-hidden">${label}</dt>${glyph ? icon(glyph) : ""}<dd class="num" data-detail="${key}">—</dd></div>`).join("")}</dl>

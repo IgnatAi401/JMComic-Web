@@ -63,18 +63,26 @@ export const authorStance = (values, preferences = new Map()) => preferences.get
 /**
  * Author names as search links or plain text, joined with " · ". Authors with a stance
  * lead the list and render as badges so a hit is never lost behind a truncated line.
+ * `limit` folds the rest into a "+N" counter (a toggle button when `expandable`).
  * `manage` keeps the original order and renders stance-cycling buttons.
  */
-export function preferenceAuthorsHtml(values, preferences = new Map(), { link = false, fallback = "作者未标注", manage = false } = {}) {
-    const authors = manage ? [...new Set(textList(values))] : rankedAuthors(values, preferences);
+export function preferenceAuthorsHtml(values, preferences = new Map(), { link = false, fallback = "作者未标注", manage = false, limit = Infinity, expandable = false } = {}) {
+    const authors = manage ? [...new Set(textList(values))] : [...new Set(rankedAuthors(values, preferences))];
     if (!authors.length) return escapeHtml(fallback);
-    return authors.map((author) => {
+    const shown = manage ? authors : authors.slice(0, Math.max(1, limit));
+    const html = shown.map((author) => {
         const attrs = `class="author-name"${stanceAttrs(author, preferences.get(author))}`;
         if (manage) return `<button ${attrs}${manageAttrs("author", author)}>${escapeHtml(author)}</button>`;
         return link
             ? `<a ${attrs} href="${searchUrl(author)}">${escapeHtml(author)}</a>`
             : `<span ${attrs}>${escapeHtml(author)}</span>`;
     }).join(" · ");
+    const rest = authors.length - shown.length;
+    if (rest <= 0) return html;
+    const label = `还有 ${rest} 位作者`;
+    return expandable
+        ? `${html} <button class="author-more" type="button" data-expand-authors aria-expanded="false" aria-label="${label}，展开全部" title="${label}">+${rest}</button>`
+        : `${html} <span class="author-more" title="${escapeHtml(authors.slice(shown.length).join("、"))}" aria-label="${label}">+${rest}</span>`;
 }
 
 const tagMoreHtml = (rest, compact) => `<span class="tag${compact ? " is-compact" : ""} tag-more" title="还有 ${rest} 个标签">+${rest}</span>`;
