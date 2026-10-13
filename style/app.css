@@ -1020,8 +1020,9 @@ a.group-row:active, button.group-row:active { background: var(--active); }
     inset: 0;
     background: linear-gradient(100deg, transparent 30%, rgba(255, 255, 255, 0.035) 50%, transparent 70%) var(--surface-2);
     background-size: 220% 100%;
-    animation: shimmer 1.6s linear infinite;
 }
+/* Shimmer only while a request is in flight; off-screen pending covers stay still (battery). */
+.cover.is-loading:not(.is-ready)::before { animation: shimmer 1.6s linear infinite; }
 .cover.is-error::before { animation: none; background: var(--surface-2); }
 .cover-index {
     position: absolute;
@@ -1137,8 +1138,8 @@ a.cover:active { transform: scale(0.98); }
     border-radius: var(--r-xs);
     background: linear-gradient(100deg, transparent 30%, rgba(255, 255, 255, 0.035) 50%, transparent 70%) var(--surface-2);
     background-size: 220% 100%;
-    animation: shimmer 1.6s linear infinite;
 }
+.rich-card:is([data-details="queued"], [data-details="loading"]) .rich-tags::before { animation: shimmer 1.6s linear infinite; }
 .rich-retry { min-height: 26px; color: var(--text-3); font-size: 12px; text-decoration: underline; text-underline-offset: 3px; }
 @media (hover: hover) {
     .rich-retry:hover { color: var(--text); }
