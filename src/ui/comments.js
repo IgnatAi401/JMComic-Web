@@ -16,8 +16,11 @@ export class Comments {
     }
     async loadCached() {
         // Comments already fetched on the detail page show here without a network request.
-        const data = await jmApi.getCachedComicComments(this.id);
-        if (data && !this.page && !this.loading) this.apply(data);
+        // Without a cache hit, fetch the first page once instead of waiting for a click.
+        const data = await jmApi.getCachedComicComments(this.id).catch(() => null);
+        if (this.page || this.loading) return;
+        if (data) this.apply(data);
+        else this.load();
     }
     apply(data) {
         const incoming = (data.list || []).filter((item) => !this.items.some((old) => (old.CID || old.id) && String(old.CID || old.id) === String(item.CID || item.id)));
