@@ -48,11 +48,13 @@ export class PreferenceEditor {
 
     render(entries) {
         this.entries = entries;
+        // Only stances that have entries get a row; with none the add bar stands alone.
         this.root.querySelector(".preference-groups").innerHTML = this.levels.map((level) => {
             const names = [...entries].filter(([, value]) => value === level).map(([name]) => name);
+            if (!names.length) return "";
             return `<section class="preference-group" aria-label="${LEVEL_LABELS[level]}的${this.noun}">
                 <h3 class="preference-group-title" data-preference="${level}">${LEVEL_LABELS[level]}<span class="num">${names.length}</span></h3>
-                <div class="chip-row">${names.map((name) => `<span class="preference-chip" data-preference="${level}"><button type="button" data-edit="${escapeHtml(name)}" aria-pressed="${name === this.editing}" aria-label="编辑 ${escapeHtml(name)}">${escapeHtml(name)}</button><button type="button" data-remove="${escapeHtml(name)}" aria-label="删除 ${escapeHtml(name)}">×</button></span>`).join("") || '<span class="preference-empty">暂无</span>'}</div>
+                <div class="chip-row">${names.map((name) => `<span class="preference-chip" data-preference="${level}"><button type="button" data-edit="${escapeHtml(name)}" aria-pressed="${name === this.editing}" aria-label="编辑 ${escapeHtml(name)}">${escapeHtml(name)}</button><button type="button" data-remove="${escapeHtml(name)}" aria-label="删除 ${escapeHtml(name)}">×</button></span>`).join("")}</div>
             </section>`;
         }).join("");
     }

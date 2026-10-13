@@ -958,6 +958,10 @@ a.group-row:active, button.group-row:active { background: var(--active); }
 @media (min-width: 700px) {
     .comic-grid { grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 16px; }
 }
+/* Tablet portrait (iPad mini 612px – iPad Air 688px of content): two columns instead of one. */
+@media (min-width: 700px) and (max-width: 1099px) {
+    .comic-grid { grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); }
+}
 
 .comic-rail {
     display: grid;
@@ -1116,7 +1120,6 @@ a.cover:active { transform: scale(0.98); }
 @media (hover: hover) {
     .later-toggle:hover { background: var(--hover); color: var(--text); }
 }
-[data-watch-later].btn[aria-pressed="true"] { color: var(--accent-text); box-shadow: inset 0 0 0 1px var(--accent-text); }
 .rich-card-body { grid-area: body; display: grid; align-content: start; gap: 8px; min-width: 0; }
 .rich-card .comic-meta { margin-top: -4px; }
 /* Wrap instead of truncating so a matched author badge is always visible. */
@@ -1154,6 +1157,14 @@ a.cover:active { transform: scale(0.98); }
     .rich-retry:hover { color: var(--text); }
 }
 
+@media (min-width: 700px) {
+    /* Narrow two-column cards: short columns keep their width, the date column gives way. */
+    .rich-stats { grid-template-columns: repeat(3, minmax(0, max-content)); column-gap: 12px; }
+    .rich-stats dd { overflow: hidden; text-overflow: ellipsis; }
+}
+@media (min-width: 700px) and (max-width: 1099px) {
+    .rich-card { grid-template-columns: 96px minmax(0, 1fr); }
+}
 @media (min-width: 1100px) {
     .rich-card { grid-template-columns: 120px minmax(0, 1fr); gap: 14px; padding: 12px; }
 }

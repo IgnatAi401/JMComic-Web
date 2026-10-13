@@ -11,7 +11,7 @@
 .home-side > [hidden] + .continue { margin-top: 0; }
 .shelves { grid-area: shelves; margin-top: 36px; min-width: 0; }
 
-@media (min-width: 1360px) {
+@media (min-width: 1440px) {
     .home-layout {
         grid-template-columns: minmax(0, 1fr) 300px;
         grid-template-areas: "random side" "shelves side";
@@ -30,6 +30,12 @@
     .home-side::-webkit-scrollbar { display: none; }
     .home-side > .continue + .continue { margin-top: 28px; }
     .home-side > [hidden] + .continue { margin-top: 0; }
+    /* Nothing saved yet: drop the empty sidebar column instead of leaving a gap. */
+    .home-layout:not(:has(.home-side > .continue:not([hidden]))) {
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-areas: "random" "shelves";
+    }
+    .home-layout:not(:has(.home-side > .continue:not([hidden]))) .home-side { display: none; }
 }
 
 /* ---- Random pick ---- */
@@ -89,7 +95,7 @@
 }
 .random-position { min-width: 56px; text-align: center; }
 
-.random-copy { display: grid; align-content: start; gap: 10px; min-width: 0; }
+.random-copy { display: grid; align-content: start; gap: 10px; min-width: 0; container-type: inline-size; }
 .random-kicker {
     display: flex;
     flex-wrap: wrap;
@@ -146,6 +152,8 @@
 .random-actions .btn-primary,
 .random-actions .btn-outline { flex: 1 1 140px; }
 .random-actions .btn-ghost { flex: 1 1 100%; }
+/* Drawing only dims the content; the busy spinner is the progress cue. */
+.random-actions .btn.is-busy:disabled { opacity: 1; }
 
 .is-swapping { animation: random-in var(--t-slow) var(--ease-out) both; }
 .random[data-direction="older"] .is-swapping { animation-name: random-in-left; }
@@ -165,15 +173,36 @@
     .random-actions .btn-primary,
     .random-actions .btn-outline,
     .random-actions .btn-ghost { flex: 0 0 auto; }
+    /* Room for “已在稍后再看”, so toggling never pushes 随机历史 along. */
+    .random-actions [data-random-later] { min-width: 150px; }
+}
+/* A copy column too narrow for one row of four (tablet portrait, or beside the home sidebar) uses 2 × 2 cells. */
+@container (max-width: 479px) {
+    .random-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .random-actions .btn { min-width: 0; }
+}
+@media (min-width: 700px) and (max-width: 1099px) {
+    /* Fixed slots, as on phones: drawing another comic keeps the card the same height. */
+    .random-title { min-height: calc(2em * 1.25); -webkit-line-clamp: 2; }
+    .random-author { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+    .random-description, .random-description:empty { display: -webkit-box; min-height: calc(3em * 1.65); -webkit-line-clamp: 3; }
+    .random-tags, .random-tags:empty { display: flex; height: 32px; overflow: hidden; }
 }
 @media (max-width: 699px) {
     .random { gap: 12px; padding: 18px; }
     .random-pager { gap: 0; }
     .random-pager .icon-btn { width: 44px; height: 44px; }
-    .random-status { flex-basis: 100%; font-size: 11px; }
-    .random-tags { max-height: 34px; overflow: hidden; }
+    /* Every slot keeps a fixed height, so drawing another comic never resizes the card. */
+    .random-kicker { flex-wrap: nowrap; white-space: nowrap; }
+    .random-status { min-width: 0; overflow: hidden; text-overflow: ellipsis; font-size: 11px; }
+    .random-title { min-height: calc(2em * 1.25); font-size: 20px; -webkit-line-clamp: 2; }
+    .random-author { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+    .random-description { display: none; }
+    .random-tags, .random-tags:empty { display: flex; height: 32px; max-height: none; overflow: hidden; }
     .random-stats { display: none; }
-    .random-actions .btn-primary, .random-actions .btn-outline { flex-basis: 100px; }
+    /* Four fixed cells: a label change or the later button enabling never reflows the row. */
+    .random-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .random-actions .btn { min-width: 0; }
 }
 @media (min-width: 1100px) {
     .random { grid-template-columns: 240px minmax(0, 1fr); padding: 32px; gap: 40px; }
@@ -236,7 +265,7 @@
 @media (min-width: 700px) {
     .continue-list { grid-auto-columns: 280px; }
 }
-@media (min-width: 1360px) {
+@media (min-width: 1440px) {
     .continue-list {
         grid-auto-flow: row;
         grid-auto-columns: auto;

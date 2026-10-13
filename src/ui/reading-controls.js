@@ -16,14 +16,12 @@ export function mountReadingControls(container, { compact = false } = {}) {
             <div class="source-picker" role="radiogroup" aria-labelledby="${container.id || "reading"}-source-label">
                 ${Array.from({ length: SOURCE_COUNT }, (_, index) => `<button type="button" role="radio" data-source="${index}" aria-label="图源 ${index + 1}">${index + 1}</button>`).join("")}
             </div>
-            ${compact ? "" : '<p class="picker-note">图片加载慢或失败时换一条线路；阅读页会自动在失败时依次尝试其他线路。</p>'}
         </div>
         <div class="reading-control">
             <div class="field-label" id="${container.id || "reading"}-batch-label">同时加载页数</div>
             <div class="batch-picker" role="radiogroup" aria-labelledby="${container.id || "reading"}-batch-label">
                 ${BATCH_VALUES.map((value) => `<button type="button" role="radio" data-batch="${value}">${value}</button>`).join("")}
             </div>
-            ${compact ? "" : '<p class="picker-note">优先加载当前页附近；数值越大越快，但更占内存。仅保存在此设备。</p>'}
         </div>`;
 
     const render = () => {

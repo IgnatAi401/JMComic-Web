@@ -165,7 +165,7 @@ class AppShell {
                 </form>
                 <div class="sheet-section search-history-section" style="margin-top:22px" hidden></div>
                 <div class="sheet-section" data-navigation-scope="same-tab">
-                    <a class="group group-row" href="./categories.html">${icon("categories")}<span class="group-row-copy"><strong>按分类与排行浏览</strong><small>主分类、副分类、时间与排序</small></span>${icon("chevronRight", "chevron")}</a>
+                    <a class="group group-row" href="./categories.html">${icon("categories")}<span class="group-row-copy"><strong>按分类与排行浏览</strong></span>${icon("chevronRight", "chevron")}</a>
                 </div>`;
             const form = this.searchSheet.body.querySelector("form");
             form.addEventListener("submit", (event) => {

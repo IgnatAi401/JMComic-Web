@@ -10,11 +10,11 @@ import { renderPageError } from "../ui/states.js";
 import { checkTrackingUpdates, hasUpdate, trackedByUpdate, updatedLabel } from "../ui/tracking.js";
 
 const VIEWS = {
-    favorites: { name: "收藏", clear: "收藏", note: "在作品详情页点“收藏”即可加入或取消。" },
-    history: { name: "最近阅读", clear: "阅读历史", note: "" },
-    tracking: { name: "追踪连载", clear: "追踪连载", note: "在多章节作品详情页点“追踪连载”即可加入；按最后更新时间排序。" },
-    later: { name: "稍后再看", clear: "稍后再看", note: "点卡片右上角的时钟按钮即可加入或移出稍后再看。" },
-    random: { name: "随机历史", clear: "随机历史", note: "这里保留在发现页验证通过的随机作品。" },
+    favorites: { name: "收藏", clear: "收藏" },
+    history: { name: "最近阅读", clear: "阅读历史" },
+    tracking: { name: "追踪连载", clear: "追踪连载" },
+    later: { name: "稍后再看", clear: "稍后再看" },
+    random: { name: "随机历史", clear: "随机历史" },
 };
 
 class LibraryPage {
@@ -70,7 +70,7 @@ class LibraryPage {
         clearButton.textContent = `清空${VIEWS[view].clear}`;
         this.checkButton.hidden = view !== "tracking";
         this.notice.className = "library-notice";
-        this.notice.textContent = this.checkingTracking && view === "tracking" ? this.notice.textContent : VIEWS[view].note;
+        this.notice.textContent = this.checkingTracking && view === "tracking" ? this.notice.textContent : "";
         if (updateUrl) {
             const url = new URL(window.location.href);
             url.searchParams.set("view", view);
@@ -127,8 +127,7 @@ class LibraryPage {
         const items = this.items();
         document.querySelector(".sync-state").textContent = `${VIEWS[this.view].name} · ${items.length}`;
         if (!items.length) {
-            this.grid.innerHTML = stateHtml({ title: "这里暂时没有作品", message: this.view === "favorites" ? "在作品详情页点“收藏”即可加入。"
-                : this.view === "tracking" ? "在多章节作品详情页点“追踪连载”即可加入。" : "开始阅读或把作品加入稍后再看。", action: { label: "去发现", href: "./index.html" } });
+            this.grid.innerHTML = stateHtml({ title: "这里暂时没有作品", action: { label: "去发现", href: "./index.html" } });
             return;
         }
         this.grid.innerHTML = items.map((item) => comicCardHtml(item, this.meta(item))).join("");
