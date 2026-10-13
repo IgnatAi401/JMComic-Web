@@ -43,6 +43,7 @@ class ChapterPage {
         document.title = `${album.name} · JMComic`;
         this.render();
         this.bind();
+        this.renderAuthors();
         this.syncTagFold();
         this.renderChapters();
         this.renderLibraryStates();
@@ -65,7 +66,7 @@ class ChapterPage {
             <div class="detail-cover">${coverHtml(album, { eager: true })}</div>
             <div class="detail-copy"><p class="eyebrow">JM ${escapeHtml(album.id)} · ${this.chapters.length > 1 ? "系列作品" : "单篇作品"}</p>
                 <h1 class="detail-title">${escapeHtml(album.name)}</h1>
-                <div class="detail-byline"><span class="detail-authors">${preferenceAuthorsHtml(authorsOf(album), undefined, { link: true })}</span><span class="detail-byline-actions"><button class="btn btn-ghost btn-sm" type="button" data-manage-preferences aria-pressed="false">${icon("sliders")}<span>管理偏好</span></button><button class="btn btn-ghost btn-sm" type="button" data-translate aria-pressed="false">${icon("translate")}<span>翻译标题</span></button></span></div>
+                <div class="detail-byline"><span class="detail-authors is-folded"></span><span class="detail-byline-actions"><button class="btn btn-ghost btn-sm" type="button" data-manage-preferences aria-pressed="false">${icon("sliders")}<span>管理偏好</span></button><button class="btn btn-ghost btn-sm" type="button" data-translate aria-pressed="false">${icon("translate")}<span>翻译标题</span></button></span></div>
                 <div class="tag-list detail-tags">${preferenceTagsHtml(album.tags)}</div>
                 <button class="detail-fold" type="button" data-fold-tags aria-expanded="false" hidden>展开全部标签</button>
                 ${asText(album.description) ? `<p class="detail-description">${escapeHtml(asText(album.description))}</p>` : ""}
@@ -92,7 +93,20 @@ class ChapterPage {
         this.root.querySelector("[data-fold-chapters]").onclick = () => this.setChaptersExpanded(!this.chaptersExpanded, { scroll: true });
         compactQuery.addEventListener?.("change", () => this.syncTagFold());
         this.root.querySelectorAll("[data-library-action]").forEach((button) => { button.onclick = () => this.libraryAction(button); });
+        // The folded author line is cut to whatever fits, so it is re-measured when its width changes.
+        const authors = this.root.querySelector(".detail-authors");
+        if (typeof ResizeObserver === "function") {
+            new ResizeObserver(() => {
+                if (!this.managing && !this.authorsExpanded && authors.clientWidth !== this.authorsWidth) this.renderAuthors();
+            }).observe(authors);
+        }
         this.root.querySelector(".detail-copy").addEventListener("click", (event) => {
+            if (event.target.closest("[data-expand-authors]")) {
+                this.authorsExpanded = !this.authorsExpanded;
+                this.renderAuthors();
+                this.root.querySelector("[data-expand-authors]")?.focus({ preventScroll: true });
+                return;
+            }
             const target = event.target.closest("[data-manage-preference]");
             if (target) this.cyclePreference(target.dataset.managePreference, target.dataset.name);
         });
@@ -101,14 +115,42 @@ class ChapterPage {
     renderPreferences() {
         const preferences = this.preferences || preferenceMaps(null);
         const manage = Boolean(this.managing);
-        this.root.querySelector(".detail-authors").innerHTML = preferenceAuthorsHtml(authorsOf(this.album), preferences.authors, { link: true, manage });
-        this.root.querySelector(".detail-tags").innerHTML = preferenceTagsHtml(this.album.tags, preferences.tags, { manage });
+        // The class moves the author line, so it is set before the line is measured.
         this.root.querySelector(".detail-copy").classList.toggle("is-managing-preferences", manage);
+        this.renderAuthors();
+        this.root.querySelector(".detail-tags").innerHTML = preferenceTagsHtml(this.album.tags, preferences.tags, { manage });
         const button = this.root.querySelector("[data-manage-preferences]");
         button.setAttribute("aria-pressed", String(manage));
         // Same length as the idle label, so the button keeps its width.
         button.querySelector("span").textContent = manage ? "退出管理" : "管理偏好";
         this.syncTagFold();
+    }
+
+    /**
+     * Folded, the authors take one line on phones and two elsewhere: as many names as fit
+     * (stance hits first) and a "+N" button that lists them all. Managing shows them all.
+     */
+    renderAuthors() {
+        const box = this.root.querySelector(".detail-authors");
+        const preferences = (this.preferences || preferenceMaps(null)).authors;
+        const values = authorsOf(this.album);
+        const total = new Set(values).size;
+        const folded = !this.managing && !this.authorsExpanded;
+        box.classList.toggle("is-folded", folded);
+        box.classList.toggle("is-expanded", !this.managing && Boolean(this.authorsExpanded));
+        if (!folded) {
+            box.innerHTML = preferenceAuthorsHtml(values, preferences, { link: true, manage: this.managing });
+            if (this.authorsExpanded) box.insertAdjacentHTML("beforeend", ' <button class="author-more" type="button" data-expand-authors aria-expanded="true">收起</button>');
+            return;
+        }
+        const fits = () => box.scrollWidth <= box.clientWidth + 1 && box.scrollHeight <= box.clientHeight + 1;
+        let limit = total;
+        this.authorsWidth = box.clientWidth;
+        box.innerHTML = preferenceAuthorsHtml(values, preferences, { link: true });
+        while (limit > 1 && !fits()) {
+            limit -= 1;
+            box.innerHTML = preferenceAuthorsHtml(values, preferences, { link: true, limit, expandable: true });
+        }
     }
 
     /** On phones a long tag list folds to three rows behind a toggle. */

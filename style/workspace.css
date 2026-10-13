@@ -111,6 +111,14 @@ body[data-page="history-migration"] { --nav-w: 0px; --tabbar-h: 0px; }
 .detail-byline { display: flex; align-items: center; justify-content: space-between; gap: 12px; color: var(--text-2); font-size: 13px; }
 .detail-byline > span { min-width: 0; }
 .detail-byline > .detail-byline-actions { display: flex; flex: none; gap: 4px; }
+/* Its width never follows its content, so cutting the folded line cannot resize it. */
+.detail-byline > .detail-authors { flex: 1 1 auto; line-height: 24px; overflow-wrap: anywhere; }
+.detail-authors .author-more { margin-left: 2px; line-height: 20px; vertical-align: middle; }
+/* Folded: two lines; chapter.js shows the names that fit and a "+N" button for the rest. */
+.detail-authors.is-folded { max-height: 48px; overflow: hidden; }
+/* A single overlong name is cut short so the "+N" button beside it stays visible. */
+.detail-authors.is-folded .author-name { display: inline-block; max-width: calc(100% - 3.5em); overflow: hidden; line-height: 20px; text-overflow: ellipsis; white-space: nowrap; vertical-align: middle; }
+.detail-authors.is-folded .author-name[data-preference]::before { margin-right: 3px; }
 /* Manage mode: tags and authors become stance-cycling buttons. */
 .detail-copy button.tag, .detail-copy button.author-name { border: 0; cursor: pointer; font: inherit; }
 .detail-copy button.tag { font-size: 13px; }
@@ -179,17 +187,18 @@ body[data-page="history-migration"] { --nav-w: 0px; --tabbar-h: 0px; }
     .detail-authors { grid-column: 2; grid-row: 3; height: 24px; margin-top: 6px; overflow: hidden; color: var(--text-2); font-size: 13px; line-height: 24px; white-space: nowrap; text-overflow: ellipsis; }
     .detail-authors .author-name { height: 20px; vertical-align: middle; }
     .detail-authors .author-name:not([data-preference]) { display: inline-block; line-height: 20px; }
-    .is-managing-preferences .detail-authors { height: auto; white-space: normal; }
+    /* Expanded or managed, the full list leaves the cover's side and runs full width below. */
+    .detail-authors.is-expanded, .is-managing-preferences .detail-authors { grid-column: 1 / -1; grid-row: 5; height: auto; max-height: none; margin-top: 16px; line-height: 26px; white-space: normal; }
     .detail-stats { grid-column: 2; grid-row: 4; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 12px; margin-top: 12px; }
     .detail-stats dd { font-size: 15px; }
-    .detail-byline > .detail-byline-actions { grid-column: 1 / -1; grid-row: 5; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 18px; }
+    .detail-byline > .detail-byline-actions { grid-column: 1 / -1; grid-row: 6; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 18px; }
     .detail-byline-actions > .btn { --btn-bg: var(--surface); }
-    .detail-tags { grid-column: 1 / -1; grid-row: 6; margin-top: 12px; }
+    .detail-tags { grid-column: 1 / -1; grid-row: 7; margin-top: 12px; }
     /* Three rows of tags: coarse-pointer tags are 32px tall with 6px gaps. */
     .detail-tags.is-folded { max-height: 108px; overflow: hidden; }
-    [data-fold-tags] { grid-column: 1 / -1; grid-row: 7; }
-    .detail-description { grid-column: 1 / -1; grid-row: 8; margin-top: 16px; font-size: 14px; line-height: 1.75; }
-    .detail-actions { grid-column: 1 / -1; grid-row: 9; margin-top: 20px; }
+    [data-fold-tags] { grid-column: 1 / -1; grid-row: 8; }
+    .detail-description { grid-column: 1 / -1; grid-row: 9; margin-top: 16px; font-size: 14px; line-height: 1.75; }
+    .detail-actions { grid-column: 1 / -1; grid-row: 10; margin-top: 20px; }
     .detail-actions > .btn-primary { min-height: 48px; }
 }
 /* Below the two-column detail layout (phones, tablets, iPad landscape) long chapter lists fold. */

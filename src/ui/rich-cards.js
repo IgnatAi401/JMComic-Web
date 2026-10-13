@@ -1,5 +1,6 @@
 import { jmApi } from "../api/JmcomicApi.js";
 import { authorsOf, formatCount, formatDate } from "./dom.js";
+import { CARD_AUTHORS } from "./comic-card.js";
 import { authorStance, fitTagRows, loadPreferences, preferenceAuthorsHtml, preferenceTagsHtml } from "./preferences.js";
 
 // Each card costs one small /album request (cached for 7 days); a low ceiling
@@ -91,7 +92,7 @@ export function fillRichCard(card, album, preferences) {
         likes: formatCount(album.likes),
     };
     Object.entries(values).forEach(([key, value]) => { field(card, key).textContent = value; });
-    field(card, "authors").innerHTML = preferenceAuthorsHtml(authorsOf(album), preferences.authors, { link: true });
+    field(card, "authors").innerHTML = preferenceAuthorsHtml(authorsOf(album), preferences.authors, { link: true, limit: CARD_AUTHORS });
     const stance = authorStance(authorsOf(album), preferences.authors);
     if (stance) card.dataset.authorPreference = stance;
     else delete card.dataset.authorPreference;

@@ -140,7 +140,7 @@ class RandomPick {
         this.q("id").textContent = `JM ${id}`;
         this.q("status").textContent = status;
         this.q("title").textContent = title;
-        this.q("author").innerHTML = preferenceAuthorsHtml(authors, preferences.authors, { link: true, fallback: "未知作者" });
+        this.q("author").innerHTML = preferenceAuthorsHtml(authors, preferences.authors, { link: true, fallback: "未知作者", limit: 3 });
         this.q("chapters").textContent = String(chapters);
         this.q("pages").textContent = String(album.total_photos ?? "—");
         // History saved before views/likes were recorded has neither field.
@@ -231,8 +231,9 @@ class RandomPick {
 }
 
 const sideAuthorHtml = (item) => {
-    const author = authorsOf(item)[0];
-    return author ? `<a class="author-name" href="${searchUrl(author)}">${escapeHtml(author)}</a>` : "未知作者";
+    // Reading history stores several authors joined with " & ".
+    const authors = authorsOf(item).flatMap((name) => name.split(" & ")).map((name) => name.trim()).filter(Boolean);
+    return authors.length ? `<a class="author-name" href="${searchUrl(authors[0])}">${escapeHtml(authors[0])}</a>${authors.length > 1 ? " 等" : ""}` : "未知作者";
 };
 
 const savedMeta = (item) => (item.savedAt ? formatDateTime(item.savedAt) : "");
