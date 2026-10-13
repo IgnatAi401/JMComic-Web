@@ -16,6 +16,7 @@ function loadCover(cover) {
     const sources = [cover.dataset.coverSrc, cover.dataset.coverFallback].filter(Boolean);
     if (!image || !sources.length) return;
     let index = 0;
+    cover.classList.add("is-loading");
     image.decoding = "async";
     image.onload = () => {
         image.classList.add("is-loaded");

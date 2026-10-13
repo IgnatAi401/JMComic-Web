@@ -1,2 +1,8 @@
 _site/
 .claude/
+.wrangler/
+.DS_Store
+# macOS 文件夹自定义图标（文件名为 Icon\r）
+Icon?
+# 同源的带后端项目，不属于本仓库
+JMComic-Next/
