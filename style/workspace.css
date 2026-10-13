@@ -166,15 +166,21 @@ body[data-page="history-migration"] { --nav-w: 0px; --tabbar-h: 0px; }
 .comment-item h3 { font-size: 13px; font-weight: 500; color: var(--text-2); }
 .comment-item p { margin-top: 8px; font-size: 14px; white-space: pre-wrap; overflow-wrap: anywhere; }
 
-/* Phones: cover beside id, title, authors and stats; everything else runs full width. */
+/* Phones: the title runs full width above the cover; id, authors and stats sit beside the cover; everything else runs full width below. */
 @media (max-width: 699px) {
-    .detail-hero { column-gap: 16px; row-gap: 0; padding-bottom: 28px; }
-    .detail-cover { grid-column: 1; grid-row: 1 / span 4; }
-    .detail-copy > .eyebrow { grid-column: 2; grid-row: 1; margin-bottom: 4px; padding-top: 0; }
-    .detail-title { grid-column: 2; grid-row: 2; font-size: 19px; line-height: 1.35; }
+    .detail-hero { grid-template-columns: 120px minmax(0, 1fr); column-gap: 16px; row-gap: 0; padding-bottom: 28px; }
+    /* The cover stretches to the id/authors/stats column, so its top and bottom edges line up with that text. */
+    .detail-cover { position: relative; grid-column: 1; grid-row: 2 / span 3; align-self: stretch; }
+    .detail-cover .cover { position: absolute; inset: 0; aspect-ratio: auto; }
+    .detail-copy > .eyebrow { grid-column: 2; grid-row: 2; margin-bottom: 4px; padding-top: 0; }
+    .detail-title { grid-column: 1 / -1; grid-row: 1; margin-bottom: 16px; font-size: 19px; line-height: 1.4; }
     .detail-byline { display: contents; }
-    .detail-authors { grid-column: 2; grid-row: 3; margin-top: 6px; color: var(--text-2); font-size: 13px; }
-    .detail-stats { grid-column: 2; grid-row: 4; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 12px; margin-top: 12px; align-self: start; }
+    /* One fixed-height line whether or not an author is a preference badge; stance hits are ranked first, so truncation only hides plain names. */
+    .detail-authors { grid-column: 2; grid-row: 3; height: 24px; margin-top: 6px; overflow: hidden; color: var(--text-2); font-size: 13px; line-height: 24px; white-space: nowrap; text-overflow: ellipsis; }
+    .detail-authors .author-name { height: 20px; vertical-align: middle; }
+    .detail-authors .author-name:not([data-preference]) { display: inline-block; line-height: 20px; }
+    .is-managing-preferences .detail-authors { height: auto; white-space: normal; }
+    .detail-stats { grid-column: 2; grid-row: 4; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 12px; margin-top: 12px; }
     .detail-stats dd { font-size: 15px; }
     .detail-byline > .detail-byline-actions { grid-column: 1 / -1; grid-row: 5; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 18px; }
     .detail-byline-actions > .btn { --btn-bg: var(--surface); }
