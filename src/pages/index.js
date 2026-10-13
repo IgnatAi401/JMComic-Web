@@ -82,7 +82,6 @@ class RandomPick {
                 candidates.push({ id, attempt: offset + candidates.length + 1 });
             }
             this.q("id").textContent = `JM ${candidates[0].id}`;
-            this.q("status").textContent = "正在抽取";
             try {
                 return await Promise.any(candidates.map(async ({ id, attempt }) => {
                     const album = await jmApi.getComicAlbum(id, { maxServers: 1, timeoutMs: 5000 });
@@ -222,9 +221,11 @@ class RandomPick {
         this.loading = loading;
         this.root.setAttribute("aria-busy", String(loading));
         this.root.classList.toggle("is-loading", loading);
-        this.q("trigger").disabled = loading;
-        // A spinner replaces the label while drawing, so the button keeps its width.
-        this.q("trigger").classList.toggle("is-busy", loading);
+        const trigger = this.q("trigger");
+        trigger.disabled = loading;
+        // The button itself carries the drawing state, so no status row appears and pushes the layout.
+        trigger.classList.toggle("is-drawing", loading);
+        this.q("trigger-label").textContent = loading ? "正在抽取" : "换一本";
         this.renderPager();
     }
 }

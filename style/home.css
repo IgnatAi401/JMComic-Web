@@ -209,8 +209,8 @@
     gap: 8px;
 }
 .random-actions .btn { min-width: 0; padding: 0 12px; }
-/* Drawing only dims the content; the busy spinner is the progress cue. */
-.random-actions .btn.is-busy:disabled { opacity: 1; }
+/* Drawing only dims the content; the button label is the progress cue. */
+.random-actions .btn.is-drawing:disabled { opacity: 1; }
 .random-actions [data-random-later][aria-pressed="true"] {
     --btn-bg: var(--accent-soft);
     --btn-fg: var(--accent-text);
