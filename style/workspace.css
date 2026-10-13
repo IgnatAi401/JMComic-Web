@@ -213,6 +213,7 @@ body[data-page="history-migration"] { --nav-w: 0px; --tabbar-h: 0px; }
     .detail-toggles { display: flex; flex-wrap: wrap; gap: 10px; }
     /* Wide enough for the longest pressed label (“已在稍后再看”). */
     .detail-toggles > .btn { flex-direction: row; gap: 8px; min-width: 156px; min-height: var(--control-h); padding: 0 16px; font-size: 15px; font-weight: 600; }
+    .detail-actions > .btn-primary { min-width: 156px; }
 }
 @media (min-width: 1280px) {
     .chapter-fold { display: none; }

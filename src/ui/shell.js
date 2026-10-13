@@ -53,7 +53,6 @@ class AppShell {
             <form class="nav-search" role="search">
                 ${icon("search")}
                 <input type="search" name="q" enterkeyhint="search" autocomplete="off" placeholder="搜索作品、作者、番号" aria-label="搜索" />
-                <kbd aria-hidden="true">/</kbd>
             </form>
             <div class="nav-group">
                 <button class="nav-item nav-search-button" type="button" data-open-search aria-label="搜索">${icon("search")}<span class="nav-item-short" aria-hidden="true">搜索</span></button>
