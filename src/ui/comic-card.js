@@ -1,14 +1,16 @@
 import { authorsOf, asText, detailUrl, escapeHtml } from "./dom.js";
 import { coverHtml } from "./covers.js";
+import { icon } from "./icons.js";
 import { preferenceAuthorsHtml } from "./preferences.js";
 import { watchLaterButtonHtml } from "./watch-later.js";
 
-const RICH_STATS = [["chapters", "章节"], ["pages", "页数"], ["date", "发布"], ["views", "观看"], ["likes", "喜欢"]];
+// [field, label, icon]: one compact row; the label stays readable to screen readers and on hover.
+const RICH_STATS = [["chapters", "章节", "list"], ["pages", "页数", "pages"], ["views", "观看", "eye"], ["likes", "喜欢", "heart"], ["date", "发布", ""]];
 
 /**
- * The catalogue tile shared by every comic list: cover beside album statistics and
- * stance-coloured tags and authors. Listing APIs omit these fields, so they start as
- * placeholders and `hydrateRichCards` fills them.
+ * The catalogue tile shared by every comic list: cover beside the title, album
+ * statistics and stance-coloured tags and authors. Listing APIs omit these fields,
+ * so they start as placeholders and `hydrateRichCards` fills them.
  */
 export const comicCardHtml = (comic, { meta = "", highlight = false } = {}) => {
     const id = String(comic?.id ?? "").trim();
@@ -21,9 +23,9 @@ export const comicCardHtml = (comic, { meta = "", highlight = false } = {}) => {
             <h3 class="comic-title"><a href="${href}">${escapeHtml(title)}</a></h3>
             <p class="comic-meta"><span data-detail="authors">${preferenceAuthorsHtml(authorsOf(comic), undefined, { link: true })}</span>${category ? ` · ${escapeHtml(category)}` : ""}</p>
             ${meta ? `<p class="comic-meta rich-note${highlight ? " is-highlight" : ""}">${escapeHtml(meta)}</p>` : ""}
-            <dl class="rich-stats">${RICH_STATS.map(([key, label]) => `<div><dt>${label}</dt><dd class="num" data-detail="${key}">—</dd></div>`).join("")}</dl>
+            <div class="tag-list rich-tags" data-detail="tags" aria-live="polite"></div>
+            <dl class="rich-stats">${RICH_STATS.map(([key, label, glyph]) => `<div title="${label}"><dt class="visually-hidden">${label}</dt>${glyph ? icon(glyph) : ""}<dd class="num" data-detail="${key}">—</dd></div>`).join("")}</dl>
         </div>
-        <div class="tag-list rich-tags" data-detail="tags" aria-live="polite"></div>
         ${id ? watchLaterButtonHtml(comic, { compact: true }) : ""}
     </article>`;
 };

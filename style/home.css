@@ -369,7 +369,7 @@
     .shelf-items {
         grid-template-columns: none;
         grid-auto-flow: column;
-        grid-auto-columns: min(320px, 86%);
+        grid-auto-columns: min(340px, 88%);
         margin-inline: calc(var(--gutter) * -1);
         padding: 2px var(--gutter) 6px;
         overflow-x: auto;
@@ -381,6 +381,12 @@
     }
     .shelf-items::-webkit-scrollbar { display: none; }
     .shelf-items > * { scroll-snap-align: start; }
+    /* Narrow rail cards: a larger cover and room for two tag rows (stats often wrap here). */
+    .shelf-items .rich-card { grid-template-columns: 128px minmax(0, 1fr); }
+    .shelf-items .rich-tags { min-height: 48px; }
+}
+@media (max-width: 699px) and (pointer: coarse) {
+    .shelf-items .rich-tags { min-height: 56px; }
 }
 
 .shelves > .tag-legend { margin-bottom: -8px; }
