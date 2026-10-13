@@ -332,10 +332,20 @@ class JmcomicApi {
         if (!id) throw new Error("评论对象 ID 无效");
         const query = new URLSearchParams({ page: Math.max(1, Number(page) || 1), mode: "all", aid: id });
         const data = (await this.#requestApi(`/forum?${query}`)).result;
-        return {
+        const result = {
             list: Array.isArray(data?.list) ? data.list : [],
             total: Math.max(0, Number(data?.total) || 0),
         };
+        // The first page is reused by the reader so its comments show without another request.
+        if (Number(page) <= 1) writeCache("comments", id, result);
+        return result;
+    }
+
+    async getCachedComicComments(subjectId, maxAgeSeconds = 6 * 60 * 60) {
+        const id = String(subjectId ?? "").trim();
+        if (!id) return null;
+        const cached = await readCache("comments", id, maxAgeSeconds);
+        return cached && Array.isArray(cached.list) ? cached : null;
     }
 
     async getCategories() {
