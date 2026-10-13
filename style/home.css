@@ -30,26 +30,36 @@
     .home-side::-webkit-scrollbar { display: none; }
     .home-side > .continue + .continue { margin-top: 28px; }
     .home-side > [hidden] + .continue { margin-top: 0; }
-    /* Nothing saved yet: drop the empty sidebar column instead of leaving a gap. */
-    .home-layout:not(:has(.home-side > .continue:not([hidden]))) {
+    /* Nothing saved yet: drop the empty sidebar column instead of leaving a gap.
+       While the library loads ([data-pending]) the column stays reserved, so the
+       usual case — saved items — doesn't squeeze the main column in afterwards. */
+    .home-layout:not(:has(.home-side > .continue:not([hidden]), .home-side[data-pending])) {
         grid-template-columns: minmax(0, 1fr);
         grid-template-areas: "random" "shelves";
     }
-    .home-layout:not(:has(.home-side > .continue:not([hidden]))) .home-side { display: none; }
+    .home-layout:not(:has(.home-side > .continue:not([hidden]), .home-side[data-pending])) .home-side { display: none; }
 }
 
 /* ---- Random pick ---- */
 
+/* One grid at every width: a header row (label + pager), cover beside title and
+   stats, tags, then one row of equally styled actions. Phones keep the cover small
+   and run the tags full width; wider screens let the cover span every row. */
 .random {
     position: relative;
     display: grid;
-    gap: 20px;
-    padding: 20px;
+    grid-template-columns: 124px minmax(0, 1fr);
+    grid-template-rows: auto auto 1fr auto auto;
+    grid-template-areas: "head head" "cover copy" "cover stats" "tags tags" "actions actions";
+    align-items: start;
+    gap: 14px 14px;
+    padding: 16px;
     overflow: hidden;
     border-radius: var(--r-xl);
     background: var(--surface);
     box-shadow: var(--line-inset);
     isolation: isolate;
+    container-type: inline-size;
 }
 .random-backdrop {
     position: absolute;
@@ -75,85 +85,161 @@
     background: linear-gradient(180deg, rgba(22, 22, 26, 0.2), var(--surface) 88%);
 }
 
-.random-media {
-    display: grid;
-    justify-items: center;
-    gap: 10px;
-}
-.random-cover {
-    width: min(43vw, 168px);
-    box-shadow: var(--shadow-3);
-}
-.random-cover[aria-disabled="true"] { pointer-events: none; }
-.random.is-loading .random-cover { opacity: 0.6; }
-.random-pager {
+.random-head {
+    grid-area: head;
     display: flex;
     align-items: center;
-    gap: 4px;
-    color: var(--text-3);
-    font-size: 13px;
+    justify-content: space-between;
+    gap: 12px;
+    min-width: 0;
 }
-.random-position { min-width: 56px; text-align: center; }
-
-.random-copy { display: grid; align-content: start; gap: 10px; min-width: 0; container-type: inline-size; }
 .random-kicker {
     display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 6px 12px;
+    align-items: baseline;
+    gap: 10px;
+    min-width: 0;
+    overflow: hidden;
     color: var(--text-3);
     font-size: 12.5px;
+    white-space: nowrap;
 }
 .random-label {
     color: var(--accent-text);
     font-weight: 700;
     letter-spacing: 0.06em;
 }
-.random-status { color: var(--text-3); }
+/* Prev · history count · next, unframed. The count links to the full history. */
+.random-pager {
+    display: flex;
+    flex: none;
+    align-items: center;
+    margin-right: -6px;
+}
+.random-pager .icon-btn { width: 34px; height: 34px; border-radius: var(--r-sm); }
+.random-pager .icon-btn svg { width: 18px; height: 18px; }
+@media (pointer: coarse) {
+    .random-pager .icon-btn { width: 38px; }
+}
+.random-history {
+    display: inline-flex;
+    align-items: center;
+    min-width: 56px;
+    height: 34px;
+    padding: 0 4px;
+    justify-content: center;
+    border-radius: var(--r-sm);
+    color: var(--text-2);
+    font-size: 12.5px;
+    transition: background-color var(--t-fast) var(--ease), color var(--t-fast) var(--ease);
+}
+@media (hover: hover) {
+    .random-history:hover { background: var(--hover); color: var(--accent-text); }
+}
+.random-history:active { background: var(--active); }
+
+/* The cover stretches over the rows it spans, so its edges line up with the
+   text beside it; the image crops slightly when that isn't exactly 3:4. */
+.random-cover {
+    grid-area: cover;
+    align-self: stretch;
+    width: 100%;
+    height: auto;
+    min-height: 0;
+    aspect-ratio: auto;
+    box-shadow: var(--shadow-3);
+}
+.random-cover img { position: absolute; inset: 0; }
+.random-cover[aria-disabled="true"] { pointer-events: none; }
+.random.is-loading .random-cover { opacity: 0.6; }
+
+/* Every text slot keeps a fixed height, so drawing another comic never resizes the card. */
+.random-copy { grid-area: copy; display: grid; align-content: start; gap: 6px; min-width: 0; }
 .random-title {
     display: -webkit-box;
+    min-height: calc(2em * 1.3);
     overflow: hidden;
-    font: 700 22px/1.25 var(--font-display);
-    letter-spacing: -0.015em;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
-}
-.random-author { color: var(--text-2); font-size: 14px; }
-.random-description {
-    display: -webkit-box;
-    max-width: 62ch;
-    overflow: hidden;
-    color: var(--text-2);
-    font-size: 14px;
-    line-height: 1.65;
+    font: 700 17px/1.3 var(--font-display);
+    letter-spacing: -0.01em;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
 }
-.random-description:empty { display: none; }
-.random-tags { margin-top: 2px; }
-.random-tags:empty { display: none; }
+.random-author,
+.random-status {
+    min-height: 1.5em;
+    overflow: hidden;
+    font-size: 13px;
+    line-height: 1.5;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+.random-author { color: var(--text-2); }
+.random-status { color: var(--text-3); font-size: 12px; }
+.random-status:empty { display: none; }
+
 .random-stats {
+    grid-area: stats;
+    align-self: end;
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    margin-top: 6px;
-    padding: 12px 0;
-    border-block: 1px solid var(--line);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px 12px;
+    min-width: 0;
 }
-.random-stats div + div { padding-left: 12px; border-left: 1px solid var(--line); }
-.random-stats dt { color: var(--text-3); font-size: 12px; }
-.random-stats dd { margin-top: 2px; font-size: 16px; font-weight: 650; white-space: nowrap; }
-.random-stats div:last-child dd { font-size: 13px; }
+.random-stats dt { color: var(--text-3); font-size: 11.5px; }
+.random-stats dd { margin-top: 1px; overflow: hidden; font-size: 14px; font-weight: 650; white-space: nowrap; text-overflow: ellipsis; }
+
+/* Phones: one swipeable row, so every tag stays reachable without changing the card height. */
+.random-tags {
+    grid-area: tags;
+    flex-wrap: nowrap;
+    min-width: 0;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+}
+.random-tags::-webkit-scrollbar { display: none; }
+.random-tags > * { flex: none; }
+.random-tags:empty { min-height: 28px; }
+@media (pointer: coarse) { .random-tags:empty { min-height: 32px; } }
+
 .random-actions {
-    display: flex;
-    flex-wrap: wrap;
+    grid-area: actions;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) var(--control-h);
     gap: 8px;
-    margin-top: 6px;
 }
-.random-actions .btn-primary,
-.random-actions .btn-outline { flex: 1 1 140px; }
-.random-actions .btn-ghost { flex: 1 1 100%; }
+.random-actions .btn { min-width: 0; padding: 0 12px; }
 /* Drawing only dims the content; the busy spinner is the progress cue. */
 .random-actions .btn.is-busy:disabled { opacity: 1; }
+.random-actions [data-random-later][aria-pressed="true"] {
+    --btn-bg: var(--accent-soft);
+    --btn-fg: var(--accent-text);
+    --btn-hover: rgba(255, 197, 61, 0.2);
+    --btn-press: rgba(255, 197, 61, 0.26);
+    box-shadow: inset 0 0 0 1px var(--accent-line);
+}
+/* A narrow card makes 稍后再看 a square icon button; its label stays for screen readers. */
+@container (max-width: 759px) {
+    .random-actions [data-random-later] { padding: 0; }
+    .random-actions [data-random-later] span {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0 0 0 0);
+        white-space: nowrap;
+    }
+}
+/* Phones: the header row sits close to the card edge and the cover. */
+@media (max-width: 699px) {
+    .random { padding-top: 8px; }
+    .random-head { margin-bottom: -4px; }
+    .random-pager .icon-btn, .random-history { height: 32px; }
+}
+@media (max-width: 379px) {
+    .random { grid-template-columns: 108px minmax(0, 1fr); gap: 14px 12px; }
+    .random-stats dd { font-size: 13px; }
+}
 
 .is-swapping { animation: random-in var(--t-slow) var(--ease-out) both; }
 .random[data-direction="older"] .is-swapping { animation-name: random-in-left; }
@@ -162,51 +248,39 @@
 
 @media (min-width: 700px) {
     .random {
-        grid-template-columns: 200px minmax(0, 1fr);
-        gap: 32px;
-        padding: 28px;
-        align-items: start;
+        grid-template-columns: 216px minmax(0, 1fr);
+        grid-template-rows: auto auto auto auto 1fr;
+        grid-template-areas: "cover head" "cover copy" "cover tags" "cover stats" "cover actions";
+        gap: 14px 28px;
+        padding: 24px;
     }
-    .random-cover { width: 100%; }
-    .random-title { font-size: 26px; }
-    .random-description { -webkit-line-clamp: 4; }
-    .random-actions .btn-primary,
-    .random-actions .btn-outline,
-    .random-actions .btn-ghost { flex: 0 0 auto; }
-    /* Room for “已在稍后再看”, so toggling never pushes 随机历史 along. */
-    .random-actions [data-random-later] { min-width: 150px; }
+    .random-copy { gap: 8px; }
+    .random-title { font-size: 24px; line-height: 1.25; min-height: calc(2em * 1.25); }
+    .random-author { font-size: 14px; }
+    .random-status { margin-top: -4px; }
+    /* Up to two wrapped rows of tags. */
+    .random-tags { flex-wrap: wrap; max-height: 62px; overflow: hidden; }
+    .random-stats {
+        align-self: start;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 0;
+        padding: 12px 0;
+        border-block: 1px solid var(--line);
+    }
+    .random-stats div + div { padding-left: 14px; border-left: 1px solid var(--line); }
+    .random-stats dt { font-size: 12px; }
+    .random-stats dd { margin-top: 2px; font-size: 16px; }
+    .random-actions { align-self: end; }
 }
-/* A copy column too narrow for one row of four (tablet portrait, or beside the home sidebar) uses 2 × 2 cells. */
-@container (max-width: 479px) {
-    .random-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .random-actions .btn { min-width: 0; }
-}
-@media (min-width: 700px) and (max-width: 1099px) {
-    /* Fixed slots, as on phones: drawing another comic keeps the card the same height. */
-    .random-title { min-height: calc(2em * 1.25); -webkit-line-clamp: 2; }
-    .random-author { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
-    .random-description, .random-description:empty { display: -webkit-box; min-height: calc(3em * 1.65); -webkit-line-clamp: 3; }
-    .random-tags, .random-tags:empty { display: flex; height: 32px; overflow: hidden; }
-}
-@media (max-width: 699px) {
-    .random { gap: 12px; padding: 18px; }
-    .random-pager { gap: 0; }
-    .random-pager .icon-btn { width: 44px; height: 44px; }
-    /* Every slot keeps a fixed height, so drawing another comic never resizes the card. */
-    .random-kicker { flex-wrap: nowrap; white-space: nowrap; }
-    .random-status { min-width: 0; overflow: hidden; text-overflow: ellipsis; font-size: 11px; }
-    .random-title { min-height: calc(2em * 1.25); font-size: 20px; -webkit-line-clamp: 2; }
-    .random-author { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
-    .random-description { display: none; }
-    .random-tags, .random-tags:empty { display: flex; height: 32px; max-height: none; overflow: hidden; }
-    .random-stats { display: none; }
-    /* Four fixed cells: a label change or the later button enabling never reflows the row. */
-    .random-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .random-actions .btn { min-width: 0; }
+@media (min-width: 700px) and (pointer: coarse) { .random-tags { max-height: 70px; } }
+@container (min-width: 760px) {
+    .random-actions { display: flex; }
+    /* Same width for all three, wide enough for “已在稍后再看”, so toggling never shifts the row. */
+    .random-actions .btn { flex: 0 0 auto; min-width: 140px; }
 }
 @media (min-width: 1100px) {
-    .random { grid-template-columns: 240px minmax(0, 1fr); padding: 32px; gap: 40px; }
-    .random-title { font-size: 30px; }
+    .random { grid-template-columns: 248px minmax(0, 1fr); gap: 16px 36px; padding: 28px; }
+    .random-title { font-size: 28px; }
 }
 
 /* ---- Continue reading ---- */

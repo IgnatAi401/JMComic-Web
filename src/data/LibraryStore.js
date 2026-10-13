@@ -50,6 +50,8 @@ function normalizeRandomAlbum(album) {
         chapters: Number(album.chapters || (Array.isArray(album.series) && album.series.length) || 1),
         total_photos: album.total_photos ?? null,
         comment_total: album.comment_total ?? 0,
+        total_views: album.total_views ?? null,
+        likes: album.likes ?? null,
         addtime: Number(album.addtime) || 0,
         cover_url: album.cover_url || album.coverUrl || "",
         savedAt: Number(album.savedAt) || Date.now(),
