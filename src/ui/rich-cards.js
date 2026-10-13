@@ -5,7 +5,6 @@ import { authorStance, fitTagRows, loadPreferences, preferenceAuthorsHtml, prefe
 // Each card costs one small /album request (cached for 7 days); a low ceiling
 // keeps a long home page from bursting the API while the user scrolls.
 const MAX_ACTIVE = 3;
-const TAG_ROWS = 2;
 const queue = [];
 let active = 0;
 
@@ -19,14 +18,23 @@ const observer = typeof IntersectionObserver === "function"
     }, { rootMargin: "240px 240px" })
     : null;
 
-// Card widths follow the viewport, so the two-row cut is re-measured on resize.
-const tagWidths = new WeakMap();
+// The tag box gets the height the cover leaves beside the text: as many rows as fit.
+function fitTags(tags) {
+    const first = tags.querySelector(":scope > .tag");
+    if (!first) return;
+    const gap = parseFloat(getComputedStyle(tags).rowGap) || 0;
+    fitTagRows(tags, Math.max(1, Math.floor((tags.clientHeight + gap) / (first.offsetHeight + gap))));
+}
+
+// Card sizes follow the viewport, so the cut is re-measured on resize.
+const tagSizes = new WeakMap();
 const tagResizer = typeof ResizeObserver === "function"
     ? new ResizeObserver((entries) => {
         entries.forEach(({ target, contentRect }) => {
-            if (tagWidths.get(target) === contentRect.width) return;
-            tagWidths.set(target, contentRect.width);
-            fitTagRows(target, TAG_ROWS);
+            const size = `${contentRect.width}x${contentRect.height}`;
+            if (tagSizes.get(target) === size) return;
+            tagSizes.set(target, size);
+            fitTags(target);
         });
     })
     : null;
@@ -90,7 +98,7 @@ export function fillRichCard(card, album, preferences) {
     const tags = field(card, "tags");
     tags.innerHTML = preferenceTagsHtml(album.tags, preferences.tags, { compact: true, prioritize: true });
     card.dataset.details = "ready";
-    fitTagRows(tags, TAG_ROWS);
+    fitTags(tags);
     tagResizer?.observe(tags);
 }
 

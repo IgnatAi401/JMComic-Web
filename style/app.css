@@ -1063,19 +1063,18 @@ a.cover:active { transform: scale(0.98); }
     text-overflow: ellipsis;
 }
 
-/* Rich cards: cover beside album statistics and tags */
-
+/* Rich cards: cover beside the title, album statistics and tags. The cover sets the card
+   height and the body fills it: title on its top edge, stats on its bottom edge, tags in
+   between. A body taller than the cover stretches the cover (cropped). */
 .rich-card {
-    grid-template-columns: 104px minmax(0, 1fr);
-    grid-template-areas: "cover body" "tags tags";
-    align-items: start;
-    gap: 12px;
-    padding: 10px;
+    grid-template-columns: 120px minmax(0, 1fr);
+    align-items: stretch;
+    gap: 10px;
+    padding: 8px;
     border-radius: var(--r-md);
     background: var(--surface);
     box-shadow: var(--line-inset);
 }
-.rich-card > .cover { grid-area: cover; }
 /* Bare icon/text buttons added for watch later and search history. */
 .later-toggle, .later-remove, .search-history-pick, .search-history-remove, .search-history-foot button {
     padding: 0;
@@ -1108,8 +1107,9 @@ a.cover:active { transform: scale(0.98); }
 @media (hover: hover) {
     .later-toggle:hover { background: var(--hover); color: var(--text); }
 }
-.rich-card-body { grid-area: body; display: grid; align-content: start; gap: 8px; min-width: 0; }
-.rich-card .comic-meta { margin-top: -4px; }
+.rich-card > .cover { align-self: stretch; }
+.rich-card-body { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.rich-card .comic-meta { margin-top: -3px; }
 /* Wrap instead of truncating so a matched author badge is always visible. */
 .rich-card .comic-meta:not(.rich-note) { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; white-space: normal; }
 .rich-card [data-detail="authors"] { display: contents; }
@@ -1118,18 +1118,24 @@ a.cover:active { transform: scale(0.98); }
 .rich-card[data-author-preference="dislike"] { box-shadow: inset 0 0 0 1.5px var(--error); }
 .rich-card .rich-note { color: var(--text-2); }
 .rich-card .rich-note.is-highlight { color: var(--accent-text); font-weight: 600; }
+/* One icon row; the date wraps under the counts when the card is narrow. */
 .rich-stats {
-    display: grid;
-    grid-template-columns: repeat(3, auto);
-    justify-content: start;
-    gap: 6px 16px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 2px 8px;
+    color: var(--text-2);
+    font-size: 12px;
+    line-height: 16px;
 }
-.rich-stats div { min-width: 0; }
-.rich-stats dt { color: var(--text-3); font-size: 11px; }
-.rich-stats dd { margin-top: 1px; color: var(--text-2); font-size: 13px; white-space: nowrap; font-variant-numeric: tabular-nums; }
-/* Full card width under the cover; fitTagRows folds anything past two rows. */
-.rich-tags { grid-area: tags; gap: 4px; min-height: 22px; max-height: 48px; overflow: hidden; }
-@media (pointer: coarse) { .rich-tags { max-height: 56px; } }
+.rich-stats div { display: inline-flex; align-items: center; gap: 3px; min-width: 0; }
+.rich-stats svg { flex: none; width: 13px; height: 13px; color: var(--text-3); }
+.rich-stats dd { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.rich-stats [data-detail="date"] { color: var(--text-3); }
+/* Takes the height the cover leaves between meta and stats (at least one row) without
+   adding to the card's height; rich-cards.js folds the tags that do not fit into "+N". */
+.rich-tags { flex: 1 0 0; height: 0; min-height: 22px; gap: 4px; align-content: flex-start; overflow: hidden; }
+@media (pointer: coarse) { .rich-tags { min-height: 26px; } }
 .rich-tags > [hidden] { display: none; }
 .rich-card:not([data-details="ready"]):not([data-details="error"]) .rich-tags::before {
     content: "";
@@ -1145,16 +1151,11 @@ a.cover:active { transform: scale(0.98); }
     .rich-retry:hover { color: var(--text); }
 }
 
-@media (min-width: 700px) {
-    /* Narrow two-column cards: short columns keep their width, the date column gives way. */
-    .rich-stats { grid-template-columns: repeat(3, minmax(0, max-content)); column-gap: 12px; }
-    .rich-stats dd { overflow: hidden; text-overflow: ellipsis; }
-}
 @media (min-width: 700px) and (max-width: 1099px) {
-    .rich-card { grid-template-columns: 96px minmax(0, 1fr); }
+    .rich-card { grid-template-columns: 112px minmax(0, 1fr); gap: 12px; padding: 10px; }
 }
 @media (min-width: 1100px) {
-    .rich-card { grid-template-columns: 120px minmax(0, 1fr); gap: 14px; padding: 12px; }
+    .rich-card { grid-template-columns: 128px minmax(0, 1fr); gap: 14px; padding: 12px; }
 }
 
 /* ---------- Feedback states ---------- */
