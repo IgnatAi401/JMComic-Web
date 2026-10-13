@@ -53,17 +53,17 @@ class RandomPick {
         if (this.loading) return;
         this.setLoading(true);
         try {
-            const { album, id, attempts, fallback } = await this.findValidAlbum();
+            const { album, id, fallback } = await this.findValidAlbum();
             await this.render(album, id, {
                 record: true,
                 direction: "newer",
-                status: fallback ? "随机验证超时 · 已回退到有效精选" : `第 ${attempts} 次验证通过`,
+                status: fallback ? "已改为精选推荐" : "",
             });
         } catch (error) {
             this.q("status").textContent = error?.message || "随机验证失败，请再试一次";
             if (!this.currentId) {
                 this.q("title").textContent = "这次没有找到有效作品";
-                this.q("author").textContent = "点“换一本”重新验证";
+                this.q("author").textContent = "";
             }
         } finally {
             this.setLoading(false);
@@ -82,7 +82,7 @@ class RandomPick {
                 candidates.push({ id, attempt: offset + candidates.length + 1 });
             }
             this.q("id").textContent = `JM ${candidates[0].id}`;
-            this.q("status").textContent = `第 ${offset / RANDOM_BATCH_SIZE + 1} 批并行验证中`;
+            this.q("status").textContent = "正在抽取";
             try {
                 return await Promise.any(candidates.map(async ({ id, attempt }) => {
                     const album = await jmApi.getComicAlbum(id, { maxServers: 1, timeoutMs: 5000 });
@@ -133,7 +133,7 @@ class RandomPick {
                 this.currentIndex = this.history.findIndex((item) => String(item.id) === id);
             } catch {
                 this.currentIndex = -1;
-                status = "作品已找到 · 历史保存失败，下次抽取时重试";
+                status = "历史保存失败";
             }
         }
         if (this.currentId && this.currentId !== id) this.animate(direction);
@@ -143,7 +143,7 @@ class RandomPick {
         this.q("status").textContent = status;
         this.q("title").textContent = title;
         this.q("author").innerHTML = preferenceAuthorsHtml(authors, preferences.authors, { link: true, fallback: "未知作者" });
-        this.q("description").textContent = asText(album.description, "这本作品暂时没有简介，打开详情继续探索。");
+        this.q("description").textContent = asText(album.description, "");
         this.q("chapters").textContent = String(chapters);
         this.q("pages").textContent = String(album.total_photos ?? "—");
         this.q("comments").textContent = String(album.comment_total ?? "0");
@@ -159,7 +159,7 @@ class RandomPick {
         cover.setAttribute("aria-label", `查看《${title}》详情`);
         const later = this.q("later");
         later.dataset.watchLater = JSON.stringify({ id, name: title, author: authors, cover_url: coverUrl });
-        later.hidden = false;
+        later.disabled = false;
         syncWatchLaterButtons(this.root);
         this.mountCover(cover, [coverUrl, jmApi.getCoverImageURL(id)], title);
         this.renderPager();
@@ -224,7 +224,8 @@ class RandomPick {
         this.root.setAttribute("aria-busy", String(loading));
         this.root.classList.toggle("is-loading", loading);
         this.q("trigger").disabled = loading;
-        this.q("trigger-label").textContent = loading ? "验证中…" : "换一本";
+        // A spinner replaces the label while drawing, so the button keeps its width.
+        this.q("trigger").classList.toggle("is-busy", loading);
         this.renderPager();
     }
 }

@@ -17,6 +17,10 @@ import { showToast } from "../ui/toast.js";
 import { seriesAlbumOf, seriesIdOf } from "../ui/tracking.js";
 import { watchLaterButtonHtml } from "../ui/watch-later.js";
 
+// Chapters shown before the list folds below the two-column layout (1280px); matches the nth-child rule in workspace.css.
+const CHAPTER_FOLD = 12;
+const compactQuery = window.matchMedia("(max-width: 699px)");
+
 const links = (values) => textList(values).map((value) => `<a class="tag" href="${searchUrl(value)}">${escapeHtml(value)}</a>`).join("");
 
 class ChapterPage {
@@ -39,6 +43,7 @@ class ChapterPage {
         document.title = `${album.name} · JMComic`;
         this.render();
         this.bind();
+        this.syncTagFold();
         this.renderChapters();
         this.renderLibraryStates();
         if (tracked) this.markTrackedViewed().catch(() => {});
@@ -62,16 +67,17 @@ class ChapterPage {
                 <h1 class="detail-title">${escapeHtml(album.name)}</h1>
                 <div class="detail-byline"><span class="detail-authors">${preferenceAuthorsHtml(authorsOf(album), undefined, { link: true })}</span><span class="detail-byline-actions"><button class="btn btn-ghost btn-sm" type="button" data-manage-preferences aria-pressed="false">${icon("sliders")}<span>管理偏好</span></button><button class="btn btn-ghost btn-sm" type="button" data-translate aria-pressed="false">${icon("translate")}<span>翻译标题</span></button></span></div>
                 <div class="tag-list detail-tags">${preferenceTagsHtml(album.tags)}</div>
-                <p class="detail-description">${escapeHtml(asText(album.description, "暂无作品简介"))}</p>
+                <button class="detail-fold" type="button" data-fold-tags aria-expanded="false" hidden>展开全部标签</button>
+                ${asText(album.description) ? `<p class="detail-description">${escapeHtml(asText(album.description))}</p>` : ""}
                 <dl class="detail-stats"><div><dt>章节</dt><dd>${this.chapters.length}</dd></div><div><dt>页数</dt><dd>${escapeHtml(album.total_photos ?? "—")}</dd></div><div><dt>观看</dt><dd>${formatCount(album.total_views)}</dd></div><div><dt>喜欢</dt><dd>${formatCount(album.likes)}</dd></div></dl>
-                <div class="detail-actions"><a class="btn btn-primary" data-start-read data-navigation="same-tab">${icon("play")}开始阅读</a>${watchLaterButtonHtml(album)}<button class="btn btn-outline" data-library-action="favorite" type="button" aria-pressed="false">${icon("bookmark")}<span>收藏</span></button><button class="btn btn-ghost" data-library-action="track" type="button" aria-pressed="false" ${this.chapters.length <= 1 ? "hidden" : ""}>${icon("track")}<span>追踪连载</span></button></div>
+                <div class="detail-actions"><a class="btn btn-primary" data-start-read data-navigation="same-tab">${icon("play")}<span>开始阅读</span></a><div class="detail-toggles">${watchLaterButtonHtml(album)}<button class="btn btn-outline" data-library-action="favorite" type="button" aria-pressed="false">${icon("bookmark")}<span>收藏</span></button>${this.chapters.length > 1 ? `<button class="btn btn-outline" data-library-action="track" type="button" aria-pressed="false">${icon("track")}<span>追踪连载</span></button>` : ""}</div></div>
             </div></header>
             <div class="detail-layout"><div class="detail-primary">
                 <section class="section detail-preview" aria-labelledby="preview-title"><div class="section-head"><h2 class="section-title" id="preview-title">内容预览</h2><span class="section-meta" data-preview-meta></span></div><div class="preview-strip" data-navigation-scope="same-tab"><span class="preview-page" data-state="loading"></span><span class="preview-page" data-state="loading"></span><span class="preview-page" data-state="loading"></span></div></section>
-                <section class="section"><div class="section-head"><h2 class="section-title">目录</h2><span class="section-meta">${this.chapters.length} 章</span></div><div class="chapter-list" data-navigation-scope="same-tab"></div></section>
+                <section class="section"><div class="section-head"><h2 class="section-title">目录</h2><span class="section-meta">${this.chapters.length} 章</span></div><div class="chapter-list" data-navigation-scope="same-tab"></div><button class="detail-fold chapter-fold" type="button" data-fold-chapters aria-expanded="false" hidden>显示全部 ${this.chapters.length} 章</button></section>
                 <section class="section detail-comments"></section>
             </div><aside class="detail-secondary">
-                <section class="section detail-info"><h2 class="section-title">作品资料</h2><dl>${[["发布", formatDate(album.addtime) || "未知"], ["评论", album.comment_total ?? 0], ["编号", album.id], ["类型", isApiTrue(album.is_aids) ? "章节合集" : this.chapters.length > 1 ? "系列" : "单篇"], ["价格", album.price || "免费"], ["购买状态", album.purchased || "无需购买"], ["原始链接", album.real_link || "无"]].map(([label, value]) => `<div><dt>${label}</dt><dd>${escapeHtml(value)}</dd></div>`).join("")}</dl><h3>关联作品</h3><div class="tag-list">${links(album.works) || "暂无"}</div><h3>角色</h3><div class="tag-list">${links(album.actors) || "暂无"}</div></section>
+                <section class="section detail-info"><h2 class="section-title">作品资料</h2><dl>${[["发布", formatDate(album.addtime) || "未知"], ["评论", album.comment_total ?? 0], ["编号", album.id], ["类型", isApiTrue(album.is_aids) ? "章节合集" : this.chapters.length > 1 ? "系列" : "单篇"], ["价格", album.price], ["购买状态", album.purchased], ["原始链接", album.real_link]].filter(([, value]) => !["", "0"].includes(asText(value))).map(([label, value]) => `<div><dt>${label}</dt><dd>${escapeHtml(value)}</dd></div>`).join("")}</dl>${[["关联作品", links(album.works)], ["角色", links(album.actors)]].map(([label, html]) => html ? `<h3>${label}</h3><div class="tag-list">${html}</div>` : "").join("")}</section>
             </aside></div>
             <section class="section related"><div class="section-head"><h2 class="section-title">相关作品</h2></div><div class="comic-grid">${(Array.isArray(album.related_list) ? album.related_list : []).map((item) => comicCardHtml(item)).join("")}</div></section>`;
         this.root.querySelector(".related").hidden = !album.related_list?.length;
@@ -82,6 +88,9 @@ class ChapterPage {
     bind() {
         this.root.querySelector("[data-translate]").onclick = () => this.translate();
         this.root.querySelector("[data-manage-preferences]").onclick = () => this.toggleManaging();
+        this.root.querySelector("[data-fold-tags]").onclick = () => this.setTagsExpanded(!this.tagsExpanded);
+        this.root.querySelector("[data-fold-chapters]").onclick = () => this.setChaptersExpanded(!this.chaptersExpanded, { scroll: true });
+        compactQuery.addEventListener?.("change", () => this.syncTagFold());
         this.root.querySelectorAll("[data-library-action]").forEach((button) => { button.onclick = () => this.libraryAction(button); });
         this.root.querySelector(".detail-copy").addEventListener("click", (event) => {
             const target = event.target.closest("[data-manage-preference]");
@@ -97,11 +106,46 @@ class ChapterPage {
         this.root.querySelector(".detail-copy").classList.toggle("is-managing-preferences", manage);
         const button = this.root.querySelector("[data-manage-preferences]");
         button.setAttribute("aria-pressed", String(manage));
-        button.querySelector("span").textContent = manage ? "完成" : "管理偏好";
+        // Same length as the idle label, so the button keeps its width.
+        button.querySelector("span").textContent = manage ? "退出管理" : "管理偏好";
+        this.syncTagFold();
+    }
+
+    /** On phones a long tag list folds to three rows behind a toggle. */
+    setTagsExpanded(expanded) {
+        this.tagsExpanded = expanded;
+        this.root.querySelector(".detail-tags").classList.toggle("is-folded", !expanded);
+        this.syncTagFold();
+    }
+
+    syncTagFold() {
+        const tags = this.root.querySelector(".detail-tags");
+        const toggle = this.root.querySelector("[data-fold-tags]");
+        tags.classList.toggle("is-folded", !this.tagsExpanded);
+        const overflowing = tags.scrollHeight > tags.clientHeight + 1;
+        toggle.hidden = this.managing || (!this.tagsExpanded && !overflowing) || (this.tagsExpanded && !compactQuery.matches);
+        toggle.setAttribute("aria-expanded", String(Boolean(this.tagsExpanded)));
+        toggle.textContent = this.tagsExpanded ? "收起标签" : `展开全部标签（${tags.children.length}）`;
+    }
+
+    /** Below the two-column layout the chapter list shows its head and the last-read chapter until expanded. */
+    setChaptersExpanded(expanded, { scroll = false } = {}) {
+        this.chaptersExpanded = expanded;
+        const list = this.root.querySelector(".chapter-list");
+        const toggle = this.root.querySelector("[data-fold-chapters]");
+        list.classList.toggle("is-folded", !expanded);
+        toggle.hidden = this.chapters.length <= CHAPTER_FOLD;
+        toggle.setAttribute("aria-expanded", String(expanded));
+        toggle.textContent = expanded ? "收起目录" : `显示全部 ${this.chapters.length} 章`;
+        // Collapsing from far down the list would leave the reader in the comments.
+        if (scroll && !expanded && list.getBoundingClientRect().top < 0) list.closest(".section").scrollIntoView({ block: "start" });
     }
 
     toggleManaging() {
         this.managing = !this.managing;
+        // Every tag must be reachable while managing; leaving restores the earlier fold.
+        if (this.managing) this.tagsBeforeManaging = this.tagsExpanded;
+        this.tagsExpanded = this.managing || this.tagsBeforeManaging;
         this.renderPreferences();
         if (this.managing) showToast("点击标签或作者切换偏好");
     }
@@ -126,7 +170,8 @@ class ChapterPage {
         this.root.querySelector(".chapter-list").innerHTML = this.chapters.map((item, index) => `<a href="${readerUrl(item.id, this.album.id)}" class="chapter-item"${String(item.id) === last ? ' aria-current="true"' : ""}><span class="mono">${String(index + 1).padStart(2, "0")}</span><strong>${escapeHtml(item.name)}</strong>${icon("chevronRight")}</a>`).join("");
         const start = this.root.querySelector("[data-start-read]");
         start.href = readerUrl(selected.id, this.album.id);
-        start.innerHTML = `${icon("play")}${last ? "继续阅读" : "开始阅读"}`;
+        start.querySelector("span").textContent = last ? "继续阅读" : "开始阅读";
+        this.setChaptersExpanded(Boolean(this.chaptersExpanded));
     }
 
     /** Tracking follows the series, also from a chapter page; older entries may hold the chapter id. */
@@ -142,6 +187,8 @@ class ChapterPage {
         const states = { favorite: [libraryStore.isFavorite(this.album.id), "收藏", "已收藏"], track: [this.isTracking(), "追踪连载", "正在追更"] };
         Object.entries(states).forEach(([action, [active, off, on]]) => {
             const button = this.root.querySelector(`[data-library-action="${action}"]`);
+            // Single works have no tracking button.
+            if (!button) return;
             button.setAttribute("aria-pressed", String(active)); button.querySelector("span").textContent = active ? on : off;
         });
     }
@@ -149,7 +196,9 @@ class ChapterPage {
     /** Favorites and tracked series are kept in this browser, beside the reading history. */
     async libraryAction(button) {
         if (button.disabled) return;
+        // Busy shows a spinner in place of the label, so the button never resizes.
         button.disabled = true;
+        button.classList.add("is-busy");
         const id = this.album.id;
         const album = { ...this.album, name: this.originalTitle };
         try {
@@ -165,13 +214,14 @@ class ChapterPage {
                 showToast("已开始追踪，可在书架查看更新");
             }
         } catch (error) { showToast(error.message || "保存失败，请重试", "warning"); }
-        finally { button.disabled = false; this.renderLibraryStates(); }
+        finally { button.disabled = false; button.classList.remove("is-busy"); this.renderLibraryStates(); }
     }
 
     async translate() {
         const button = this.root.querySelector("[data-translate]");
         if (button.disabled) return;
         button.disabled = true;
+        button.classList.add("is-busy");
         try {
             if (this.translated) this.translated = false;
             else {
@@ -184,7 +234,7 @@ class ChapterPage {
             button.querySelector("span").textContent = this.translated ? "显示原文" : "翻译标题";
             button.setAttribute("aria-pressed", String(this.translated));
         } catch (error) { showToast(error.message || "翻译失败", "warning"); }
-        finally { button.disabled = false; }
+        finally { button.disabled = false; button.classList.remove("is-busy"); }
     }
 }
 

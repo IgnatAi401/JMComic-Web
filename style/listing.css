@@ -36,7 +36,7 @@
     .filter-label { margin-bottom: 12px; }
     .filter-label small { display: block; }
 }
-@media (max-width: 440px) {
-    .listing-bar { align-items: flex-start; }
-    .listing-bar-actions { flex-direction: column; align-items: flex-end; }
+/* Phones reset from inside the filter sheet; the bar keeps just the summary and the toggle. */
+@media (max-width: 699px) {
+    .listing-bar [data-filter-reset] { display: none; }
 }

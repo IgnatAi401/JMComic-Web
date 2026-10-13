@@ -33,11 +33,11 @@ export class ListingFilterPanel {
     init() {
         this.panel.innerHTML = `
             <div class="filter-group" data-filter="order"><h3 class="filter-label">排序</h3><div class="chip-row">${choices(Object.entries(ORDER_LABELS), this.filters.order)}</div></div>
-            <div class="filter-group" data-filter="time"><h3 class="filter-label">时间 <small>周期榜只按观看量排序</small></h3><div class="chip-row">${choices(Object.entries(TIME_LABELS).map(([key, label]) => [key, key === "a" ? "全部" : label]), this.filters.time)}</div></div>
+            <div class="filter-group" data-filter="time"><h3 class="filter-label">时间</h3><div class="chip-row">${choices(Object.entries(TIME_LABELS).map(([key, label]) => [key, key === "a" ? "全部" : label]), this.filters.time)}</div></div>
             <div class="filter-group" data-filter="category"><h3 class="filter-label">主分类</h3><div class="chip-row" data-category-options>${choices([["0", "全部"]], "0")}</div></div>
             <div class="filter-group" data-filter="mainTag" hidden><h3 class="filter-label">副分类</h3><div class="chip-row" data-subcategory-options></div></div>
             <div class="filter-group">
-                <label class="switch"><input type="checkbox" data-hide-serial /><span class="switch-copy"><strong>只看单章</strong><small>隐藏章节数大于 1 的作品</small></span></label>
+                <label class="switch"><input type="checkbox" data-hide-serial /><span class="switch-copy"><strong>只看单章</strong></span></label>
             </div>`;
         this.panel.addEventListener("click", (event) => {
             const button = event.target.closest(".chip[data-value]");

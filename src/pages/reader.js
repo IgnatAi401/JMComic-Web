@@ -116,7 +116,7 @@ export class ReaderPage {
     openProgress(opener) {
         if (!this.progressSheet) {
             this.progressSheet = new Sheet({ name: "progress", title: "跳转页面" });
-            this.progressSheet.body.innerHTML = `<form class="reader-progress-form"><label class="field"><span class="field-label">页码</span><input class="input" name="page" type="number" min="1" max="${this.viewport.nodes.length}" inputmode="numeric" required /></label><input name="slider" type="range" min="1" max="${this.viewport.nodes.length}" step="1" aria-label="选择页码" /><p class="picker-note">共 ${this.viewport.nodes.length} 页 · 也可以用键盘 J / K 翻页</p><button class="btn btn-primary" type="submit">跳转</button></form>`;
+            this.progressSheet.body.innerHTML = `<form class="reader-progress-form"><label class="field"><span class="field-label">页码</span><input class="input" name="page" type="number" min="1" max="${this.viewport.nodes.length}" inputmode="numeric" required /></label><input name="slider" type="range" min="1" max="${this.viewport.nodes.length}" step="1" aria-label="选择页码" /><p class="picker-note">共 ${this.viewport.nodes.length} 页</p><button class="btn btn-primary" type="submit">跳转</button></form>`;
             const form = this.progressSheet.body.querySelector("form");
             form.elements.slider.oninput = () => { form.elements.page.value = form.elements.slider.value; };
             form.elements.page.oninput = () => { form.elements.slider.value = form.elements.page.value; };
