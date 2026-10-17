@@ -6,3 +6,5 @@ _site/
 Icon?
 # 同源的带后端项目，不属于本仓库
 JMComic-Next/
+# AI 助手的项目说明，只保留在本地
+AGENTS.md
