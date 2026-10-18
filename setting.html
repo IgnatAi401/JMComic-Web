@@ -15,6 +15,14 @@
     <main class="app-main" id="main" tabindex="-1"><div class="page setting-page">
         <header class="page-head"><div class="page-head-copy"><h1 class="page-title">设置</h1></div></header>
         <div class="settings-stack">
+            <section class="settings-section" aria-labelledby="settings-account-title">
+                <div class="settings-section-head"><h2 class="settings-section-title" id="settings-account-title">JM 账号</h2></div>
+                <div class="group">
+                <button class="group-row" type="button" data-open-account><span class="settings-icon" data-tone="accent"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8.5" r="3.8"/><path d="M4.5 20c.9-3.9 3.6-6 7.5-6s6.6 2.1 7.5 6"/></svg></span><span class="group-row-copy"><strong data-account-name>未登录</strong><small data-account-hint>点此登录</small></span><svg class="chevron" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg></button>
+                <button class="group-row" type="button" data-checkin><span class="settings-icon" data-tone="success"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M8 3v4M16 3v4M3.5 10h17"/><path d="m9 15 2 2 4-4"/></svg></span><span class="group-row-copy"><strong data-checkin-label>每日签到</strong><small data-checkin-state>登录后可签到</small></span><svg class="chevron" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg></button>
+                <label class="group-row switch settings-switch-row"><span class="settings-icon" data-tone="info"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><path d="M12 7.5V12l3 2"/></svg></span><span class="group-row-copy"><strong>每日自动签到</strong><small>每天第一次打开网站时自动签到</small></span><input type="checkbox" data-auto-checkin aria-label="每日自动签到" /></label>
+                </div>
+            </section>
             <section class="settings-section" aria-labelledby="settings-reading-title">
                 <div class="settings-section-head"><h2 class="settings-section-title" id="settings-reading-title">阅读体验</h2></div>
                 <div class="group settings-reading" id="settings-reading"></div>

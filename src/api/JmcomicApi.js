@@ -4,7 +4,10 @@ import { readLocalStorage, removeLocalStorage, writeLocalStorage } from "../util
 import { crypto, parseJsonText } from "./Crypto.js";
 import { listingApiOrder, listingCategoryPath, normalizeListingFilters } from "../utils/ListingFilters.js";
 
-/** Browser client for the public (anonymous) JM mobile API. */
+// Check-in rewards appear as "Jcoin:10 EXP:10" or "[EXP:10] [COIN:2]".
+const DAILY_REWARD_PATTERN = /\[?\s*(J?COINS?|EXP)\s*[:：]\s*(\d+)\s*\]?/gi;
+
+/** Browser client for the JM mobile API. Account calls pass the login session explicitly. */
 class JmcomicApi {
     accessToken = null;
     currentKey = null;
@@ -12,6 +15,7 @@ class JmcomicApi {
     initPromise = null;
     albumRequests = new Map();
     chapterRequests = new Map();
+    dailyCheckInPromise = null;
     albumMemoryLimit = 500;
     chapterMemoryLimit = 120;
     bootstrapFromCache = false;
@@ -140,9 +144,19 @@ class JmcomicApi {
         throw lastError || new Error("网络请求失败");
     }
 
+    /**
+     * `session` is the JM login session (PHP session `AVS`). The browser cannot send JM's
+     * cookie cross-site, so it goes in the query string; cookies are omitted so a stale
+     * `AVS` cookie can not take precedence. `form` sends multipart fields instead of `data`.
+     * `failFast` stops at the first HTTP error instead of trying other API lines.
+     */
     async #requestApi(path, {
         method = "GET",
         data = null,
+        form = null,
+        session = "",
+        omitCredentials = false,
+        failFast = false,
         validate = null,
         retryBootstrap = true,
         maxServers = 5,
@@ -163,8 +177,11 @@ class JmcomicApi {
                 payload = {};
             }
             if (!response.ok) {
-                const detail = payload?.error || payload?.msg || payload?.message;
-                throw new Error(`HTTP ${response.status}${typeof detail === "string" ? `：${detail}` : ""}`);
+                const detail = payload?.errorMsg || payload?.error || payload?.msg || payload?.message;
+                throw Object.assign(
+                    new Error(`HTTP ${response.status}${typeof detail === "string" && detail ? `：${detail}` : ""}`),
+                    { httpStatus: response.status, detail: typeof detail === "string" ? detail : "" },
+                );
             }
             return { response, payload };
         };
@@ -175,16 +192,23 @@ class JmcomicApi {
             const options = {
                 method,
                 headers,
-                credentials: "include",
+                credentials: session || omitCredentials ? "omit" : "include",
                 redirect: "follow",
             };
-            if (data) {
+            if (form) {
+                const body = new FormData();
+                Object.entries(form).forEach(([name, value]) => body.append(name, String(value)));
+                options.body = body;
+            } else if (data) {
                 headers["Content-Type"] = "application/x-www-form-urlencoded;charset=UTF-8";
                 options.body = new URLSearchParams(data).toString();
             }
+            const url = session
+                ? `https://${server}${path}${path.includes("?") ? "&" : "?"}AVS=${encodeURIComponent(session)}`
+                : `https://${server}${path}`;
 
             try {
-                const { response, payload } = await this.#fetchWithTimeout(`https://${server}${path}`, options, timeoutMs, readResponse);
+                const { response, payload } = await this.#fetchWithTimeout(url, options, timeoutMs, readResponse);
                 const result = typeof payload.data === "string"
                     ? crypto.decryptData(key, payload.data)
                     : (payload.data ?? payload);
@@ -206,11 +230,14 @@ class JmcomicApi {
                 return { result, server: responseServer, payload };
             } catch (error) {
                 lastError = error;
+                if (failFast && error?.httpStatus) throw error;
             }
         }
         if (retryBootstrap && this.bootstrapFromCache) {
             await this.init(true);
-            return this.#requestApi(path, { method, data, validate, retryBootstrap: false, maxServers, timeoutMs });
+            return this.#requestApi(path, {
+                method, data, form, session, omitCredentials, failFast, validate, retryBootstrap: false, maxServers, timeoutMs,
+            });
         }
         throw lastError || new Error("所有 API 线路均请求失败");
     }
@@ -361,6 +388,158 @@ class JmcomicApi {
         return (await this.#requestApi(`/categories/filter?${query}`)).result;
     }
 
+    /** Log in; resolves to the JM profile, whose `s` is the session to pass to account calls. */
+    async login(username, password) {
+        let profile;
+        try {
+            // A rejected password is final: do not repeat it on every API line.
+            profile = (await this.#requestApi("/login", {
+                method: "POST",
+                data: { username, password },
+                omitCredentials: true,
+                failFast: true,
+            })).result;
+        } catch (error) {
+            if (error?.httpStatus) throw new Error(error.detail || `登录失败（HTTP ${error.httpStatus}）`);
+            throw new Error(`登录失败：${this.#dailyErrorDetail(error)}`);
+        }
+        if (!profile || typeof profile !== "object" || !profile.uid || !profile.s) {
+            throw new Error(this.#dailyMessage(profile) || "账号或密码错误");
+        }
+        return profile;
+    }
+
+    /**
+     * Check in for `account` ({ uid, session }). `relogin` is called once when JM shows the
+     * session is dead, and must resolve to a fresh { uid, session } for the same account.
+     */
+    async dailyCheckIn(account, { relogin } = {}) {
+        if (!/^\d+$/.test(String(account?.uid ?? "")) || !account?.session) throw new Error("请先登录账号");
+        if (this.dailyCheckInPromise) return this.dailyCheckInPromise;
+        this.dailyCheckInPromise = this.#performDailyCheckIn(account, relogin).finally(() => {
+            this.dailyCheckInPromise = null;
+        });
+        return this.dailyCheckInPromise;
+    }
+
+    async getDailyCheckInStatus({ uid, session }) {
+        const query = new URLSearchParams({ user_id: uid });
+        const { result, payload } = await this.#requestApi(`/daily?${query}`, { session });
+        this.#assertDailyCheckInEnvelope(payload);
+        if (this.#isEmptyDailyResult(result) && !this.#dailyMessage(payload)) {
+            throw Object.assign(new Error("未取得签到活动信息，请稍后重试"), { emptyDailyResponse: true });
+        }
+        if (!result || typeof result !== "object" || Array.isArray(result)) {
+            throw new Error("未取得签到活动信息，请稍后重试");
+        }
+        const dailyId = String(result.daily_id ?? "").trim();
+        if (!/^\d+$/.test(dailyId) || Number(dailyId) <= 0) {
+            throw new Error(String(result.msg ?? result.message ?? "未取得签到活动 ID，请稍后重试").trim());
+        }
+        return { ...result, dailyId };
+    }
+
+    #dailyMessage(value) {
+        if (typeof value === "string") return value.trim();
+        return [value?.msg, value?.message, value?.error, value?.errorMsg]
+            .filter((item) => typeof item === "string" && item.trim())
+            .map((item) => item.trim()).join("；");
+    }
+
+    #dailyErrorDetail(error) {
+        if (error?.name === "AbortError" || /timeout|timed out/i.test(error?.message || "")) return "请求超时";
+        if (/failed to fetch|load failed|networkerror/i.test(error?.message || "")) return "网络连接中断，请检查网络";
+        if (/decryption failed/i.test(error?.message || "")) return "无法解密接口响应";
+        return error?.message || "未收到有效响应";
+    }
+
+    #isEmptyDailyResult(result) {
+        return result == null || result === "" || (typeof result === "object" && Object.keys(result).length === 0);
+    }
+
+    async #performDailyCheckIn(account, relogin) {
+        const outcome = await this.#attemptDailyCheckIn(account);
+        if (outcome) return outcome;
+        // JM answers with code 200 and an empty body (not 401) once the session has
+        // expired or was replaced by a login elsewhere. Log in again and retry once: a
+        // repeated check-in on the same day only reports "already checked in".
+        if (!relogin) throw new Error("登录已失效（可能已过期或在其他地方登录），请重新登录后签到");
+        let fresh;
+        try {
+            fresh = await relogin();
+            if (String(fresh?.uid ?? "") !== String(account.uid)) throw new Error("重新登录后的账号与当前账号不一致");
+        } catch (error) {
+            if (error?.needsLogin) throw error;
+            throw new Error(`登录已失效（可能已过期或在其他地方登录），重新登录失败，签到未完成：${this.#dailyErrorDetail(error)}`);
+        }
+        return this.#attemptDailyCheckIn(fresh, true);
+    }
+
+    /** Returns the check-in outcome, or null when JM answered with an empty body on a first attempt. */
+    async #attemptDailyCheckIn(account, relogged = false) {
+        let daily;
+        try {
+            daily = await this.getDailyCheckInStatus(account);
+        } catch (error) {
+            if (error?.emptyDailyResponse && !relogged) return null;
+            throw new Error(`读取签到活动失败，尚未提交签到：${this.#dailyErrorDetail(error)}`);
+        }
+        let response;
+        try {
+            // One API line only: a lost response does not mean the write was rejected,
+            // so this POST is never repeated automatically.
+            response = await this.#requestApi("/daily_chk", {
+                method: "POST",
+                form: { user_id: account.uid, daily_id: daily.dailyId },
+                session: account.session,
+                maxServers: 1,
+                retryBootstrap: false,
+            });
+        } catch (error) {
+            throw new Error(`签到结果未确认：${this.#dailyErrorDetail(error)}。请求可能已生效，请稍后再次签到确认。`);
+        }
+        const { result, payload } = response;
+        const message = [...new Set([this.#dailyMessage(result), this.#dailyMessage(payload)].filter(Boolean))].join("；");
+        const status = String(result?.status ?? "").trim().toLowerCase();
+        const successStatus = ["success", "ok", "1", "true", "200"].includes(status);
+        const failedStatus = ["fail", "failed", "failure", "error", "0", "false"].includes(status) || /^[45]\d\d$/.test(status);
+        const failedCode = [payload?.code, result?.code].some((code) => code != null && Number(code) !== 200);
+        const failedMessage = /失败|失敗|错误|錯誤|异常|異常|未登录|未登入|请先|請先|无法|無法|尚未|未能|没有|沒有|未成功|未签到|未簽到|不成功|not\s+(?:successful|checked)|fail(?:ed|ure)?|error|denied/i.test(message);
+        const already = /已(?:经|經)?(?:完成)?[签簽]到|[签簽]到[过過]|[重複复]{2}[签簽]到|already\s+checked[ -]?in/i.test(message);
+        if (already && !failedMessage) {
+            return { status: "already", message: `今天已签到，无需重复提交${message ? `：${message}` : ""}` };
+        }
+        if (failedStatus || failedCode || failedMessage || this.#dailyMessage(result?.error) || this.#dailyMessage(payload?.error)) {
+            throw new Error(`签到接口返回失败：${message || `状态 ${status || result?.code || payload?.code}`}`);
+        }
+        if (this.#isEmptyDailyResult(result) && !message && !status) {
+            if (!relogged) return null;
+            throw new Error("签到接口返回了空结果，未确认成功：已重新登录但仍没有签到结果。请稍后再次签到确认。");
+        }
+        // The real success response carries only rewards, e.g. {"msg":"Jcoin:10 EXP:10"}.
+        // Failure wording is rejected above, so a reward-only message is a confirmed success.
+        const rewards = this.#dailyRewards(message);
+        const successMessage = /签到成功|簽到成功|check[ -]?in\s+(?:succeeded|successful)/i.test(message);
+        if ((!successStatus && !successMessage && !rewards.length) || (status && !successStatus)) {
+            throw new Error(`签到响应异常，未确认成功${message ? `：${message}` : ""}${status ? `（状态 ${status}）` : ""}。请稍后再次签到确认。`);
+        }
+        if (rewards.length && !message.replace(DAILY_REWARD_PATTERN, "").replace(/[\s,，、；;]+/g, "")) {
+            return { status: "success", message: `签到成功：获得 ${rewards.join("、")}` };
+        }
+        const localizedMessage = message.replace(DAILY_REWARD_PATTERN, (_match, kind, amount) => `获得 ${amount} ${/exp/i.test(kind) ? "经验" : "金币"}`);
+        return { status: "success", message: localizedMessage || "签到成功" };
+    }
+
+    #dailyRewards(message) {
+        return [...message.matchAll(DAILY_REWARD_PATTERN)]
+            .map(([, kind, amount]) => `${amount} ${/exp/i.test(kind) ? "经验" : "金币"}`);
+    }
+
+    #assertDailyCheckInEnvelope(payload) {
+        if (!payload || typeof payload !== "object" || payload.code == null) return;
+        if (Number(payload.code) === 200) return;
+        throw new Error(`签到接口状态 ${payload.code}：${this.#dailyMessage(payload) || "接口未提供原因"}`);
+    }
 
     getCoverImageURL(id) {
         return `https://${this.imgServers[Number(id) % 5]}/media/albums/${id}_3x4.jpg`;
