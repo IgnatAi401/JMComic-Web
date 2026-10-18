@@ -1,4 +1,6 @@
 import { mountShell } from "../ui/shell.js";
+import { authSession } from "../auth/AuthSession.js";
+import { autoCheckIn } from "../auth/AutoCheckIn.js";
 import { mountReadingControls } from "../ui/reading-controls.js";
 import { libraryStore } from "../data/LibraryStore.js";
 import { PreferenceEditor } from "../ui/preference-editor.js";
@@ -12,6 +14,21 @@ import { LATEST_VERSION } from "../data/changelog.js";
 import { readSessionStorage, removeSessionStorage, writeSessionStorage } from "../utils/BrowserStorage.js";
 
 mountShell();
+
+const autoCheckInSwitch = document.querySelector("[data-auto-checkin]");
+const checkInState = document.querySelector("[data-checkin-state]");
+const renderCheckIn = () => {
+    autoCheckInSwitch.checked = autoCheckIn.enabled;
+    const uid = authSession.user?.uid;
+    checkInState.textContent = !uid ? "登录后可签到" : autoCheckIn.isDone(uid) ? "今天已签到" : "今天还没签到";
+};
+autoCheckInSwitch.addEventListener("change", () => {
+    autoCheckIn.setEnabled(autoCheckInSwitch.checked);
+    showToast(autoCheckInSwitch.checked ? "已开启每日自动签到" : "已关闭每日自动签到");
+});
+window.addEventListener("jm-auth-change", renderCheckIn);
+window.addEventListener("jm-checkin-change", renderCheckIn);
+renderCheckIn();
 mountReadingControls(document.querySelector("#settings-reading"));
 
 const editors = [

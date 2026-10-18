@@ -1,11 +1,15 @@
+import { authSession } from "../auth/AuthSession.js";
+import { autoCheckIn } from "../auth/AutoCheckIn.js";
 import { setting } from "../core/Setting.js";
 import { openInNewPage } from "../utils/NavigationPolicy.js";
 import { maybeShowChangelog } from "./changelog.js";
-import { pageName, searchUrl } from "./dom.js";
+import { AccountPanel } from "./account.js";
+import { escapeHtml, pageName, searchUrl } from "./dom.js";
 import { icon } from "./icons.js";
 import { Sheet } from "./overlay.js";
 import { mountReadingControls } from "./reading-controls.js";
 import { attachSearchHistory, mountSearchHistorySection } from "./search-history.js";
+import { showToast } from "./toast.js";
 
 /* Information architecture. `rail` is the short label used on the iPad-portrait rail. */
 const PRIMARY = [
@@ -36,6 +40,9 @@ class AppShell {
             this.bindShortcuts();
             maybeShowChangelog();
         }
+        window.addEventListener("jm-auth-change", () => this.renderAccount());
+        this.renderAccount();
+        this.scheduleAutoCheckIn();
         return this;
     }
 
@@ -64,7 +71,12 @@ class AppShell {
             </div>
             <div class="nav-footer">
                 <button class="nav-item" type="button" data-open-reading aria-label="图片线路与加载">${icon("source")}<span class="nav-item-label" data-source-label>图源 1</span><span class="nav-item-short" aria-hidden="true">图源</span></button>
+                <button class="nav-item" type="button" data-checkin aria-label="每日签到">${icon("checkin")}<span class="nav-item-label" data-checkin-label>每日签到</span><span class="nav-item-short" aria-hidden="true">签到</span></button>
                 ${navLink({ page: "setting", label: "设置", rail: "设置", icon: "settings" }, current)}
+                <button class="nav-account" type="button" data-open-account>
+                    <span class="avatar" data-avatar>${icon("user")}</span>
+                    <span class="nav-account-copy"><strong data-account-name>未登录</strong><small data-account-hint>点此登录</small></span>
+                </button>
             </div>`;
 
         const mobileHeader = document.createElement("header");
@@ -80,6 +92,8 @@ class AppShell {
                 ${[...PRIMARY, ...PERSONAL, { page: "setting", label: "设置", rail: "设置", icon: "settings" }].map((item) => navLink(item, current)).join("")}
                 <div class="mobile-menu-actions">
                     <button class="nav-item" type="button" data-open-reading>${icon("source")}<span>图源与加载</span></button>
+                    <button class="nav-item" type="button" data-checkin>${icon("checkin")}<span data-checkin-label>每日签到</span></button>
+                    <button class="nav-item" type="button" data-open-account>${icon("user")}<span data-account-name>账号</span></button>
                 </div>
             </nav>`;
         document.body.prepend(nav, mobileHeader);
@@ -111,12 +125,14 @@ class AppShell {
         });
         attachSearchHistory(nav.querySelector(".nav-search"), (query) => this.submitSearch(query));
         document.addEventListener("click", (event) => {
-            const trigger = event.target.closest("[data-open-search], [data-open-more], [data-open-reading]");
+            const trigger = event.target.closest("[data-open-search], [data-open-more], [data-open-reading], [data-open-account], [data-checkin]");
             if (!trigger) return;
             const opener = trigger.closest(".mobile-navigation") ? menuToggle : trigger;
             if (trigger.hasAttribute("data-open-search")) this.openSearch(opener);
             else if (trigger.hasAttribute("data-open-more")) this.openMore(opener);
             else if (trigger.hasAttribute("data-open-reading")) this.openReading(opener);
+            else if (trigger.hasAttribute("data-open-account")) this.openAccount(opener);
+            else if (trigger.hasAttribute("data-checkin")) this.checkIn();
         });
         const renderSource = () => {
             nav.querySelector("[data-source-label]").textContent = `图源 ${Number(setting.using_imgserver_index) + 1} · 并发 ${setting.image_load_batch_size}`;
@@ -216,7 +232,82 @@ class AppShell {
         }
         this.readingSheet.open({ opener });
     }
+
+    openAccount(opener = document.activeElement) {
+        if (!this.accountSheet) {
+            this.accountSheet = new Sheet({
+                name: "account",
+                title: "JM 账号",
+                onClose: () => this.accountPanel.clearSecrets(),
+            });
+            this.accountPanel = new AccountPanel(this.accountSheet.body).mount();
+        }
+        this.accountPanel.load();
+        this.accountSheet.open({ opener });
+    }
+
+    renderAccount() {
+        const user = authSession.user;
+        const name = authSession.username;
+        document.querySelectorAll("[data-avatar]").forEach((node) => {
+            node.classList.toggle("is-configured", Boolean(user));
+            node.innerHTML = user && name ? escapeHtml(name.slice(0, 1).toUpperCase()) : icon("user");
+        });
+        document.querySelectorAll("[data-account-name]").forEach((node) => {
+            if (node.closest(".account-identity")) return;
+            node.textContent = user ? name : "未登录";
+        });
+        document.querySelectorAll("[data-account-hint]").forEach((node) => {
+            node.textContent = user ? (user.levelName || "会员") : (name ? "登录已失效" : "点此登录");
+        });
+        this.nav?.querySelector("[data-open-account]")?.setAttribute("aria-label", user ? `JM 账号，已登录 ${name}` : "JM 账号，未登录");
+    }
+
+    /** First visit of the day: check in quietly in the background. */
+    scheduleAutoCheckIn() {
+        const run = () => {
+            const uid = authSession.user?.uid;
+            if (autoCheckIn.shouldRun(uid)) this.checkIn({ auto: true });
+        };
+        if (typeof requestIdleCallback === "function") requestIdleCallback(run, { timeout: 3000 });
+        else setTimeout(run, 1000);
+    }
+
+    async checkIn({ auto = false } = {}) {
+        if (this.checkingIn) return;
+        if (!authSession.isLoggedIn) {
+            if (auto) return;
+            showToast("请先登录 JM 账号", "warning");
+            this.openAccount();
+            return;
+        }
+        this.checkingIn = true;
+        const labels = [...document.querySelectorAll("[data-checkin-label]")];
+        const buttons = [...document.querySelectorAll("[data-checkin]")];
+        const original = labels.map((label) => label.textContent);
+        labels.forEach((label) => { label.textContent = "签到中…"; });
+        buttons.forEach((button) => { button.disabled = true; });
+        if (auto) autoCheckIn.markAttempt();
+        try {
+            const uid = authSession.user.uid;
+            const result = await authSession.checkIn();
+            if (result.status === "success" || result.status === "already") autoCheckIn.markDone(uid);
+            /* 自动签到时“今天已签到”不打扰用户。 */
+            if (auto && result.status === "already") return;
+            const message = result.message || "签到结果未确认";
+            showToast(auto ? `已自动签到：${message.replace(/^签到成功[：:]?\s*/, "") || "签到成功"}` : message, result.status === "success" ? "success" : "default");
+        } catch (error) {
+            const message = error.message || "签到失败，请稍后重试";
+            showToast(auto ? `自动签到失败：${message}` : message, "warning");
+        } finally {
+            this.checkingIn = false;
+            labels.forEach((label, index) => { label.textContent = original[index]; });
+            buttons.forEach((button) => { button.disabled = false; });
+        }
+    }
 }
 
 export const appShell = new AppShell();
 export const mountShell = (options) => appShell.mount(options);
+export const openAccount = (opener) => appShell.openAccount(opener);
+export const checkIn = () => appShell.checkIn();
