@@ -8,3 +8,35 @@ Icon?
 JMComic-Next/
 # AI 助手的项目说明，只保留在本地
 AGENTS.md
+
+# purge-assets: 素材和 AI 代理说明只留在本地，不进仓库
+AGENTS.md
+.DS_Store
+*.png
+*.jpg
+*.jpeg
+*.webp
+*.gif
+*.avif
+*.ico
+*.bmp
+*.svg
+*.tif
+*.tiff
+*.psd
+*.woff
+*.woff2
+*.ttf
+*.otf
+*.eot
+*.mp3
+*.wav
+*.ogg
+*.m4a
+*.mp4
+*.webm
+*.mov
+*.glb
+*.gltf
+*.fbx
+*.pdf
