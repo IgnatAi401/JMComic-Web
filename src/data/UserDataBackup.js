@@ -11,7 +11,7 @@ const APP = "JMComic-Web";
 const FORMAT_VERSION = 1;
 const MAX_FILE_BYTES = 20 * 1024 * 1024;
 const EXCLUDED_PREFIXES = ["jm_cache:"];
-const EXCLUDED_KEYS = new Set(["jm_api_bootstrap_v1", "jm_account_session", "jm_auto_checkin_attempt"]);
+const EXCLUDED_KEYS = new Set(["jm_api_bootstrap_v1", "jm_account_session", "jm_auto_checkin_attempt", "jm_auto_checkin_failure"]);
 const EXTRA_KEYS = new Set(["using_imgserver_index"]);
 
 const isUserKey = (key) => typeof key === "string"

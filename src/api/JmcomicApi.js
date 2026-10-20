@@ -6,6 +6,8 @@ import { listingApiOrder, listingCategoryPath, normalizeListingFilters } from ".
 
 // Check-in rewards appear as "Jcoin:10 EXP:10" or "[EXP:10] [COIN:2]".
 const DAILY_REWARD_PATTERN = /\[?\s*(J?COINS?|EXP)\s*[:：]\s*(\d+)\s*\]?/gi;
+/* JM, or Cloudflare in front of an API line, refused the request before handling it. */
+const isRefusedStatus = (status) => status === 403 || status === 429;
 
 /** Browser client for the JM mobile API. Account calls pass the login session explicitly. */
 class JmcomicApi {
@@ -148,7 +150,9 @@ class JmcomicApi {
      * `session` is the JM login session (PHP session `AVS`). The browser cannot send JM's
      * cookie cross-site, so it goes in the query string; cookies are omitted so a stale
      * `AVS` cookie can not take precedence. `form` sends multipart fields instead of `data`.
-     * `failFast` stops at the first HTTP error instead of trying other API lines.
+     * `failFast` stops at the first HTTP error instead of trying other API lines, except
+     * when that line refused the request (403/429) or failed (5xx) before handling it.
+     * `refusedOnly` tries the next API line only after a 403/429, for writes that must not repeat.
      */
     async #requestApi(path, {
         method = "GET",
@@ -157,6 +161,7 @@ class JmcomicApi {
         session = "",
         omitCredentials = false,
         failFast = false,
+        refusedOnly = false,
         validate = null,
         retryBootstrap = true,
         maxServers = 5,
@@ -230,13 +235,14 @@ class JmcomicApi {
                 return { result, server: responseServer, payload };
             } catch (error) {
                 lastError = error;
-                if (failFast && error?.httpStatus) throw error;
+                if (failFast && error?.httpStatus && !isRefusedStatus(error.httpStatus) && error.httpStatus < 500) throw error;
+                if (refusedOnly && !isRefusedStatus(error?.httpStatus)) throw error;
             }
         }
         if (retryBootstrap && this.bootstrapFromCache) {
             await this.init(true);
             return this.#requestApi(path, {
-                method, data, form, session, omitCredentials, failFast, validate, retryBootstrap: false, maxServers, timeoutMs,
+                method, data, form, session, omitCredentials, failFast, refusedOnly, validate, retryBootstrap: false, maxServers, timeoutMs,
             });
         }
         throw lastError || new Error("所有 API 线路均请求失败");
@@ -400,7 +406,9 @@ class JmcomicApi {
                 failFast: true,
             })).result;
         } catch (error) {
-            if (error?.httpStatus) throw new Error(error.detail || `登录失败（HTTP ${error.httpStatus}）`);
+            if (error?.httpStatus) {
+                throw Object.assign(new Error(error.detail || `登录失败（HTTP ${error.httpStatus}）`), { httpStatus: error.httpStatus });
+            }
             throw new Error(`登录失败：${this.#dailyErrorDetail(error)}`);
         }
         if (!profile || typeof profile !== "object" || !profile.uid || !profile.s) {
@@ -446,7 +454,14 @@ class JmcomicApi {
             .map((item) => item.trim()).join("；");
     }
 
+    #dailyError(message, cause) {
+        return Object.assign(new Error(message), { httpStatus: cause?.httpStatus });
+    }
+
     #dailyErrorDetail(error) {
+        if (isRefusedStatus(error?.httpStatus)) {
+            return `${error.detail || `JM 拒绝访问（HTTP ${error.httpStatus}），可能是线路风控或请求过于频繁`}，请过一段时间再试`;
+        }
         if (error?.name === "AbortError" || /timeout|timed out/i.test(error?.message || "")) return "请求超时";
         if (/failed to fetch|load failed|networkerror/i.test(error?.message || "")) return "网络连接中断，请检查网络";
         if (/decryption failed/i.test(error?.message || "")) return "无法解密接口响应";
@@ -470,7 +485,7 @@ class JmcomicApi {
             if (String(fresh?.uid ?? "") !== String(account.uid)) throw new Error("重新登录后的账号与当前账号不一致");
         } catch (error) {
             if (error?.needsLogin) throw error;
-            throw new Error(`登录已失效（可能已过期或在其他地方登录），重新登录失败，签到未完成：${this.#dailyErrorDetail(error)}`);
+            throw this.#dailyError(`登录已失效（可能已过期或在其他地方登录），重新登录失败，签到未完成：${this.#dailyErrorDetail(error)}`, error);
         }
         return this.#attemptDailyCheckIn(fresh, true);
     }
@@ -482,21 +497,24 @@ class JmcomicApi {
             daily = await this.getDailyCheckInStatus(account);
         } catch (error) {
             if (error?.emptyDailyResponse && !relogged) return null;
-            throw new Error(`读取签到活动失败，尚未提交签到：${this.#dailyErrorDetail(error)}`);
+            throw this.#dailyError(`读取签到活动失败，尚未提交签到：${this.#dailyErrorDetail(error)}`, error);
         }
         let response;
         try {
-            // One API line only: a lost response does not mean the write was rejected,
-            // so this POST is never repeated automatically.
+            // Another API line is tried only after a 403/429: a lost response does not mean
+            // the write was rejected, so this POST is never repeated after other failures.
             response = await this.#requestApi("/daily_chk", {
                 method: "POST",
                 form: { user_id: account.uid, daily_id: daily.dailyId },
                 session: account.session,
-                maxServers: 1,
+                refusedOnly: true,
                 retryBootstrap: false,
             });
         } catch (error) {
-            throw new Error(`签到结果未确认：${this.#dailyErrorDetail(error)}。请求可能已生效，请稍后再次签到确认。`);
+            if (isRefusedStatus(error?.httpStatus)) {
+                throw this.#dailyError(`签到被拒绝，签到未完成：${this.#dailyErrorDetail(error)}`, error);
+            }
+            throw this.#dailyError(`签到结果未确认：${this.#dailyErrorDetail(error)}。请求可能已生效，请稍后再次签到确认。`, error);
         }
         const { result, payload } = response;
         const message = [...new Set([this.#dailyMessage(result), this.#dailyMessage(payload)].filter(Boolean))].join("；");
@@ -538,7 +556,7 @@ class JmcomicApi {
     #assertDailyCheckInEnvelope(payload) {
         if (!payload || typeof payload !== "object" || payload.code == null) return;
         if (Number(payload.code) === 200) return;
-        throw new Error(`签到接口状态 ${payload.code}：${this.#dailyMessage(payload) || "接口未提供原因"}`);
+        throw Object.assign(new Error(`签到接口状态 ${payload.code}：${this.#dailyMessage(payload) || "接口未提供原因"}`), { httpStatus: Number(payload.code) });
     }
 
     getCoverImageURL(id) {

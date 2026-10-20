@@ -288,8 +288,8 @@ class AppShell {
         labels.forEach((label) => { label.textContent = "签到中…"; });
         buttons.forEach((button) => { button.disabled = true; });
         if (auto) autoCheckIn.markAttempt();
+        const uid = authSession.user.uid;
         try {
-            const uid = authSession.user.uid;
             const result = await authSession.checkIn();
             if (result.status === "success" || result.status === "already") autoCheckIn.markDone(uid);
             /* 自动签到时“今天已签到”不打扰用户。 */
@@ -298,7 +298,13 @@ class AppShell {
             showToast(auto ? `已自动签到：${message.replace(/^签到成功[：:]?\s*/, "") || "签到成功"}` : message, result.status === "success" ? "success" : "default");
         } catch (error) {
             const message = error.message || "签到失败，请稍后重试";
-            showToast(auto ? `自动签到失败：${message}` : message, "warning");
+            if (!auto) {
+                showToast(message, "warning");
+                return;
+            }
+            const refused = error.httpStatus === 403 || error.httpStatus === 429 || /HTTP (?:403|429)/.test(message);
+            const willRetry = autoCheckIn.markFailure(uid, { refused });
+            showToast(`自动签到失败：${message}${willRetry ? "" : "。今天不再自动重试，可稍后手动签到"}`, "warning");
         } finally {
             this.checkingIn = false;
             labels.forEach((label, index) => { label.textContent = original[index]; });
