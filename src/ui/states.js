@@ -28,7 +28,7 @@ export function renderState(target, options) {
     root.innerHTML = stateHtml(options);
 }
 
-export function renderPageError(target, error, { title = "页面加载失败", action = { href: "./index.html", label: "返回发现" } } = {}) {
+export function renderPageError(target, error, { title = "页面加载失败", action = { href: "./", label: "返回发现" } } = {}) {
     renderState(target, {
         tone: "error",
         title,

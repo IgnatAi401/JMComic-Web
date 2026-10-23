@@ -127,7 +127,7 @@ class LibraryPage {
         const items = this.items();
         document.querySelector(".sync-state").textContent = `${VIEWS[this.view].name} · ${items.length}`;
         if (!items.length) {
-            this.grid.innerHTML = stateHtml({ title: "这里暂时没有作品", action: { label: "去发现", href: "./index.html" } });
+            this.grid.innerHTML = stateHtml({ title: "这里暂时没有作品", action: { label: "去发现", href: "./" } });
             return;
         }
         this.grid.innerHTML = items.map((item) => comicCardHtml(item, this.meta(item))).join("");

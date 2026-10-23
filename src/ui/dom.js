@@ -54,10 +54,11 @@ export const plainText = (value) => {
     return (template.content.textContent || "").replace(/\n{3,}/g, "\n\n").trim();
 };
 
-export const detailUrl = (id) => `./chapter.html?id=${encodeURIComponent(id)}`;
-export const searchUrl = (query) => `./search.html?sq=${encodeURIComponent(query)}`;
-export const readerUrl = (chapterId, albumId, page = 0) => `./reader.html?id=${encodeURIComponent(chapterId)}&album=${encodeURIComponent(albumId)}${Number(page) > 1 ? `&page=${Math.trunc(Number(page))}` : ""}`;
+export const detailUrl = (id) => `./chapter?id=${encodeURIComponent(id)}`;
+export const searchUrl = (query) => `./search?sq=${encodeURIComponent(query)}`;
+export const readerUrl = (chapterId, albumId, page = 0) => `./reader?id=${encodeURIComponent(chapterId)}&album=${encodeURIComponent(albumId)}${Number(page) > 1 ? `&page=${Math.trunc(Number(page))}` : ""}`;
 
+export const pageUrl = (page) => (page === "index" ? "./" : `./${page}`);
 export const pageName = () => location.pathname.split("/").pop()?.replace(".html", "") || "index";
 
 export const $ = (selector, root = document) => root.querySelector(selector);

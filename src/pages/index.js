@@ -316,7 +316,7 @@ async function renderShelves() {
 
     root.setAttribute("aria-busy", "false");
     if (!sections.length) {
-        root.innerHTML = stateHtml({ title: "今天的书架还是空的", message: "稍后再来看看，或者去分类里逛逛。", action: { href: "./categories.html", label: "浏览分类" } });
+        root.innerHTML = stateHtml({ title: "今天的书架还是空的", message: "稍后再来看看，或者去分类里逛逛。", action: { href: "./categories", label: "浏览分类" } });
         return;
     }
     root.innerHTML = preferenceLegendHtml(preferences) + sections.map((section, sectionIndex) => {

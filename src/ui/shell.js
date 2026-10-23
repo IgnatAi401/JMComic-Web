@@ -4,7 +4,7 @@ import { setting } from "../core/Setting.js";
 import { openInNewPage } from "../utils/NavigationPolicy.js";
 import { maybeShowChangelog } from "./changelog.js";
 import { AccountPanel } from "./account.js";
-import { escapeHtml, pageName, searchUrl } from "./dom.js";
+import { escapeHtml, pageName, pageUrl, searchUrl } from "./dom.js";
 import { icon } from "./icons.js";
 import { Sheet } from "./overlay.js";
 import { mountReadingControls } from "./reading-controls.js";
@@ -22,7 +22,7 @@ const PERSONAL = [
 ];
 
 const navLink = (item, current) => `
-    <a class="nav-item" href="./${item.page}.html"${item.page === current ? ' aria-current="page"' : ""} aria-label="${item.label}">
+    <a class="nav-item" href="${pageUrl(item.page)}"${item.page === current ? ' aria-current="page"' : ""} aria-label="${item.label}">
         ${icon(item.icon)}<span class="nav-item-label">${item.label}</span><span class="nav-item-short" aria-hidden="true">${item.rail}</span>
     </a>`;
 
@@ -53,8 +53,8 @@ class AppShell {
         nav.setAttribute("aria-label", "主导航");
         nav.dataset.navigationScope = "same-tab";
         nav.innerHTML = `
-            <a class="brand" href="./index.html" aria-label="JMComic 发现">
-                <img src="./image/b5c2a091-eb74-4b78-99dd-b52dc2a1dfe5.png" alt="" width="32" height="32" />
+            <a class="brand" href="./" aria-label="JMComic 发现">
+                <img src="./image/logo-64.png" alt="" width="32" height="32" />
                 <span class="brand-name">JM<b>Comic</b></span>
             </a>
             <form class="nav-search" role="search">
@@ -85,7 +85,7 @@ class AppShell {
         mobileHeader.innerHTML = `
             <div class="mobile-masthead">
                 <button class="icon-btn" type="button" data-toggle-menu aria-label="展开导航菜单" aria-expanded="false" aria-controls="mobile-navigation">${icon("menu")}</button>
-                <a class="mobile-brand" href="./index.html" aria-label="JMComic 发现">JM<b>Comic</b></a>
+                <a class="mobile-brand" href="./" aria-label="JMComic 发现">JM<b>Comic</b></a>
                 <button class="icon-btn" type="button" data-open-search aria-label="搜索" aria-haspopup="dialog">${icon("search")}</button>
             </div>
             <nav class="mobile-navigation" id="mobile-navigation" aria-label="主导航" hidden>
@@ -180,7 +180,7 @@ class AppShell {
                 </form>
                 <div class="sheet-section search-history-section" style="margin-top:22px" hidden></div>
                 <div class="sheet-section" data-navigation-scope="same-tab">
-                    <a class="group group-row" href="./categories.html">${icon("categories")}<span class="group-row-copy"><strong>按分类与排行浏览</strong></span>${icon("chevronRight", "chevron")}</a>
+                    <a class="group group-row" href="./categories">${icon("categories")}<span class="group-row-copy"><strong>按分类与排行浏览</strong></span>${icon("chevronRight", "chevron")}</a>
                 </div>`;
             const form = this.searchSheet.body.querySelector("form");
             form.addEventListener("submit", (event) => {
@@ -199,7 +199,7 @@ class AppShell {
     openMore(opener) {
         if (!this.moreSheet) {
             const current = this.current;
-            const tile = (page, label, iconName, extra = "") => `<a class="action-tile" href="./${page}.html"${page === current ? ' aria-current="page"' : ""}>${icon(iconName)}<span>${label}</span>${extra}</a>`;
+            const tile = (page, label, iconName, extra = "") => `<a class="action-tile" href="${pageUrl(page)}"${page === current ? ' aria-current="page"' : ""}>${icon(iconName)}<span>${label}</span>${extra}</a>`;
             this.moreSheet = new Sheet({
                 name: "more",
                 title: "更多",
