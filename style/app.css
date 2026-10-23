@@ -1397,6 +1397,12 @@ a.cover:active { transform: scale(0.98); }
     padding: calc(var(--safe-top) + 16px) calc(var(--safe-right) + 16px) calc(var(--safe-bottom) + 16px) calc(var(--safe-left) + 16px);
     z-index: 45;
 }
+/* This dialog never touches the viewport edges. Bottom-sheet sampling strips would
+ * briefly paint the panel colour there instead of the backdrop (or reader artwork).
+ * Keep the backdrop stable while the panel animates so the edge has no fade states. */
+.changelog-sheet::before,
+.changelog-sheet::after { display: none; }
+.changelog-sheet .sheet-backdrop { transition: none; }
 .changelog-sheet .sheet-panel {
     width: min(520px, 100%);
     max-height: min(640px, 100%);
