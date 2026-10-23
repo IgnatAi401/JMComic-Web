@@ -20,23 +20,29 @@ const observer = typeof IntersectionObserver === "function"
     : null;
 
 // The tag box gets the height the cover leaves beside the text: as many rows as fit.
-function fitTags(tags) {
-    const first = tags.querySelector(":scope > .tag");
-    if (!first) return;
-    const gap = parseFloat(getComputedStyle(tags).rowGap) || 0;
-    fitTagRows(tags, Math.max(1, Math.floor((tags.clientHeight + gap) / (first.offsetHeight + gap))));
+// Every box is measured before any is cut: each cut forces a full page layout on the next read.
+function fitTags(boxes) {
+    const items = boxes.flatMap((tags) => {
+        const first = tags.querySelector(":scope > .tag");
+        if (!first) return [];
+        const gap = parseFloat(getComputedStyle(tags).rowGap) || 0;
+        return [[tags, Math.max(1, Math.floor((tags.clientHeight + gap) / (first.offsetHeight + gap)))]];
+    });
+    fitTagRows(items);
 }
 
-// Card sizes follow the viewport, so the cut is re-measured on resize.
+// Card sizes follow the viewport, so the cut is re-measured on resize. Its first
+// report for a newly filled card does the initial cut, batched with every other
+// card filled in the same frame.
 const tagSizes = new WeakMap();
 const tagResizer = typeof ResizeObserver === "function"
     ? new ResizeObserver((entries) => {
-        entries.forEach(({ target, contentRect }) => {
+        fitTags(entries.filter(({ target, contentRect }) => {
             const size = `${contentRect.width}x${contentRect.height}`;
-            if (tagSizes.get(target) === size) return;
+            if (tagSizes.get(target) === size) return false;
             tagSizes.set(target, size);
-            fitTags(target);
-        });
+            return true;
+        }).map(({ target }) => target));
     })
     : null;
 
@@ -99,8 +105,9 @@ export function fillRichCard(card, album, preferences) {
     const tags = field(card, "tags");
     tags.innerHTML = preferenceTagsHtml(album.tags, preferences.tags, { compact: true, prioritize: true });
     card.dataset.details = "ready";
-    fitTags(tags);
-    tagResizer?.observe(tags);
+    // A box already observed reports again only if its size changes, so a refill cuts it here.
+    if (tagResizer && !tagSizes.has(tags)) tagResizer.observe(tags);
+    else fitTags([tags]);
 }
 
 /** Fill every pending rich card inside `root` once it comes near the viewport. */

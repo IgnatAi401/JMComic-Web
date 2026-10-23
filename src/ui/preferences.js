@@ -88,27 +88,40 @@ export function preferenceAuthorsHtml(values, preferences = new Map(), { link = 
 const tagMoreHtml = (rest, compact) => `<span class="tag${compact ? " is-compact" : ""} tag-more" title="还有 ${rest} 个标签">+${rest}</span>`;
 
 /**
- * Keep a wrapping tag list within `maxRows` lines by hiding the tags that would
- * spill over and replacing them with a "+N" counter that itself still fits.
+ * Keep each wrapping tag list within its `maxRows` lines by hiding the tags that
+ * would spill over and replacing them with a "+N" counter that itself still fits.
+ * Takes `[container, maxRows]` pairs and alternates all writes with all reads, so a
+ * batch costs a few page layouts instead of several per list.
  */
-export function fitTagRows(container, maxRows = 2) {
-    container.querySelector(":scope > .tag-more")?.remove();
-    const tags = [...container.querySelectorAll(":scope > .tag")];
-    tags.forEach((tag) => { tag.hidden = false; });
-    const tops = [...new Set(tags.map((tag) => tag.offsetTop))].sort((a, b) => a - b);
-    if (tops.length <= maxRows) return;
-    const lastTop = tops[maxRows - 1];
-    let visible = tags.findIndex((tag) => tag.offsetTop > lastTop);
-    tags.slice(visible).forEach((tag) => { tag.hidden = true; });
-    const template = document.createElement("template");
-    template.innerHTML = tagMoreHtml(tags.length - visible, tags[0].classList.contains("is-compact"));
-    const more = template.content.firstElementChild;
-    container.append(more);
-    while (visible > 1 && more.offsetTop > lastTop) {
-        visible -= 1;
-        tags[visible].hidden = true;
-        more.textContent = `+${tags.length - visible}`;
-        more.title = `还有 ${tags.length - visible} 个标签`;
+export function fitTagRows(items) {
+    const lists = items.map(([container, maxRows]) => {
+        container.querySelector(":scope > .tag-more")?.remove();
+        const tags = [...container.querySelectorAll(":scope > .tag")];
+        tags.forEach((tag) => { tag.hidden = false; });
+        return { container, maxRows, tags };
+    });
+    let pending = lists.filter((list) => {
+        const tops = [...new Set(list.tags.map((tag) => tag.offsetTop))].sort((a, b) => a - b);
+        if (tops.length <= list.maxRows) return false;
+        list.lastTop = tops[list.maxRows - 1];
+        list.visible = list.tags.findIndex((tag) => tag.offsetTop > list.lastTop);
+        return true;
+    });
+    pending.forEach((list) => {
+        list.tags.slice(list.visible).forEach((tag) => { tag.hidden = true; });
+        const template = document.createElement("template");
+        template.innerHTML = tagMoreHtml(list.tags.length - list.visible, list.tags[0].classList.contains("is-compact"));
+        list.more = template.content.firstElementChild;
+        list.container.append(list.more);
+    });
+    while (pending.length) {
+        pending = pending.filter((list) => list.visible > 1 && list.more.offsetTop > list.lastTop);
+        pending.forEach((list) => {
+            list.visible -= 1;
+            list.tags[list.visible].hidden = true;
+            list.more.textContent = `+${list.tags.length - list.visible}`;
+            list.more.title = `还有 ${list.tags.length - list.visible} 个标签`;
+        });
     }
 }
 

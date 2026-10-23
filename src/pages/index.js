@@ -32,6 +32,11 @@ class RandomPick {
     constructor(root) {
         this.root = root;
         this.q = (name) => root.querySelector(`[data-random-${name}]`);
+        // Wide cards fit every action label in one row. Not a container query: a query
+        // container makes Safari restyle the whole page for each change anywhere on it.
+        if (typeof ResizeObserver === "function") {
+            new ResizeObserver(([entry]) => root.toggleAttribute("data-wide", entry.contentRect.width >= 760)).observe(root);
+        }
     }
 
     async init() {
@@ -237,14 +242,14 @@ const sideAuthorHtml = (item) => {
 };
 
 const savedMeta = (item) => (item.savedAt ? formatDateTime(item.savedAt) : "");
+const sideListMarkup = new WeakMap();
 
 function renderSideList(section, items, { removable = false, meta = savedMeta, highlight = () => false } = {}) {
     section.hidden = !items.length;
     const side = section.closest(".home-side");
     side.removeAttribute("data-pending");
     side.hidden = [...side.querySelectorAll(".continue")].every((node) => node.hidden);
-    if (!items.length) return;
-    section.querySelector(".continue-list").innerHTML = items.map((item) => {
+    const html = items.map((item) => {
         const title = asText(item.name ?? item.title, "未命名作品");
         const href = detailUrl(item.id);
         return `<li class="continue-item${removable ? " later-item" : ""}${highlight(item) ? " is-highlight" : ""}">
@@ -256,6 +261,11 @@ function renderSideList(section, items, { removable = false, meta = savedMeta, h
             ${removable ? `<button class="later-remove" type="button" data-later-remove="${escapeHtml(item.id)}" aria-label="从稍后再看移除《${escapeHtml(title)}》" title="移除">${icon("close")}</button>` : ""}
         </li>`;
     }).join("");
+    // Library events also include random history and tracking checks. Preserve loaded
+    // images when the visible list has not changed, instead of restarting their fade-in.
+    if (sideListMarkup.get(section) === html) return;
+    section.querySelector(".continue-list").innerHTML = html;
+    sideListMarkup.set(section, html);
     hydrateCovers(section);
 }
 
@@ -341,14 +351,15 @@ class HomePage {
         mountShell();
         document.querySelector("[data-today]").textContent = new Date().toLocaleDateString("zh-CN", { month: "long", day: "numeric", weekday: "long" });
         await jmApi.init();
+        await libraryStore.init();
         bindWatchLater();
+        renderWatchLater(); renderTracking(); renderContinueReading();
         const random = new RandomPick(document.querySelector(".random"));
         // The random pick and the shelves are independent; load them side by side.
         await Promise.all([
             random.init()
                 .catch((error) => { document.querySelector("[data-random-status]").textContent = error.message || "随机历史暂时不可用"; })
                 .finally(() => {
-                    renderWatchLater(); renderTracking(); renderContinueReading();
                     // Stale series are re-checked quietly; the list re-renders on change.
                     checkTrackingUpdates().catch(() => {});
                 }),

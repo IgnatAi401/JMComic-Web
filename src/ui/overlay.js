@@ -130,6 +130,8 @@ export class Sheet {
         this.isOpen = true;
         this.opener = opener;
         openSheets.push(this);
+        // Pinning the body is when Safari 26+ samples its bar colours; the static edge
+        // strips in app.css (.sheet::before/::after) make that first sample final.
         lockPageScroll(this);
         syncModalBackground();
         this.root.inert = false;

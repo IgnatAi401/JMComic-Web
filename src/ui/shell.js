@@ -21,6 +21,8 @@ const PERSONAL = [
     { page: "library", label: "书架", rail: "书架", icon: "library" },
 ];
 
+const MENU_HANDOFF_MS = 200;
+
 const navLink = (item, current) => `
     <a class="nav-item" href="${pageUrl(item.page)}"${item.page === current ? ' aria-current="page"' : ""} aria-label="${item.label}">
         ${icon(item.icon)}<span class="nav-item-label">${item.label}</span><span class="nav-item-short" aria-hidden="true">${item.rail}</span>
@@ -127,12 +129,20 @@ class AppShell {
         document.addEventListener("click", (event) => {
             const trigger = event.target.closest("[data-open-search], [data-open-more], [data-open-reading], [data-open-account], [data-checkin]");
             if (!trigger) return;
-            const opener = trigger.closest(".mobile-navigation") ? menuToggle : trigger;
-            if (trigger.hasAttribute("data-open-search")) this.openSearch(opener);
-            else if (trigger.hasAttribute("data-open-more")) this.openMore(opener);
-            else if (trigger.hasAttribute("data-open-reading")) this.openReading(opener);
-            else if (trigger.hasAttribute("data-open-account")) this.openAccount(opener);
-            else if (trigger.hasAttribute("data-checkin")) this.checkIn();
+            const fromMenu = Boolean(trigger.closest(".mobile-navigation"));
+            const opener = fromMenu ? menuToggle : trigger;
+            const run = () => {
+                if (trigger.hasAttribute("data-open-search")) this.openSearch(opener);
+                else if (trigger.hasAttribute("data-open-more")) this.openMore(opener);
+                else if (trigger.hasAttribute("data-open-reading")) this.openReading(opener);
+                else if (trigger.hasAttribute("data-open-account")) this.openAccount(opener);
+                else if (trigger.hasAttribute("data-checkin")) this.checkIn();
+            };
+            // Safari only re-tints its bars when the drawer has really gone, and it ignores a
+            // second re-tint that follows too closely (real iPhones more than the simulator),
+            // so give the closed drawer a moment before the next sheet opens.
+            if (fromMenu) setTimeout(run, MENU_HANDOFF_MS);
+            else run();
         });
         const renderSource = () => {
             nav.querySelector("[data-source-label]").textContent = `图源 ${Number(setting.using_imgserver_index) + 1} · 并发 ${setting.image_load_batch_size}`;

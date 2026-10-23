@@ -1084,7 +1084,7 @@ a.cover:active { transform: scale(0.98); }
 
 /* Rich cards: cover beside the title, album statistics and tags. The cover sets the card
    height and the body fills it: title on its top edge, stats on its bottom edge, tags in
-   between. A body taller than the cover stretches the cover (cropped). */
+   between. On phones a body taller than the cover stretches the cover (cropped). */
 .rich-card {
     grid-template-columns: 120px minmax(0, 1fr);
     align-items: stretch;
@@ -1128,6 +1128,15 @@ a.cover:active { transform: scale(0.98); }
 }
 .rich-card > .cover { align-self: stretch; }
 .rich-card-body { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+/* From 700px the cover always leaves the body 20px+ to spare, so nothing needs stretching:
+   the body ignores its content when sized and the cover keeps its own ratio. Safari then
+   lays out only the changed card when details or a cover load, not every card on the page
+   (a stretched aspect-ratio cover alone made each change cost ~30ms on the home page).
+   Phone rails keep stretching, where a few cards run past the cover. */
+@media (min-width: 700px) {
+    .rich-card > .cover { align-self: start; }
+    .rich-card-body { contain: size layout; }
+}
 .rich-card .comic-meta { margin-top: -3px; }
 /* One line whatever the author count: stance hits lead and only a few names show (the
    rest fold into "+N"); long names shrink with an ellipsis so a badge always stays visible. */
@@ -1271,15 +1280,48 @@ a.cover:active { transform: scale(0.98); }
     transition: opacity var(--t-med) var(--ease);
 }
 .sheet.is-open .sheet-backdrop { opacity: 1; }
+/* Safari 26+ samples (and averages) its bar colours from a band along the viewport
+ * edges at the moment the page is pinned, mid-animation. Static strips in the final colours fill that band
+ * from the first frame (under the panel), so the sample is already right; Safari keeps
+ * it, so the strips drop out once the open transition is done. */
+.sheet { --edge-top: #070709; /* --overlay over --bg */ --edge-bottom: var(--elevated); --edge-top-h: 64px; --edge-bottom-h: 120px; }
+.sheet::before,
+.sheet::after {
+    content: "";
+    position: absolute;
+    left: 0; right: 0;
+    z-index: 1;
+    pointer-events: none;
+}
+/* Tall enough to fill the whole sampled band; a thin strip got averaged with the
+ * half-faded backdrop on real iPhones and came out darker than the panel. */
+.sheet::before { top: 0; height: var(--edge-top-h); background: var(--edge-top); }
+.sheet::after { bottom: 0; height: var(--edge-bottom-h); background: var(--edge-bottom); }
+.sheet:not(.is-open)::before,
+.sheet:not(.is-open)::after { display: none; }
+.sheet.is-open::before,
+.sheet.is-open::after { animation: sheet-edge-out 1ms 420ms forwards; }
+@keyframes sheet-edge-out { to { visibility: hidden; } }
+/* Safari 26 starts the page below the status bar, so a top strip would sit on the in-flow
+ * masthead and hide it until the strip drops out. Ordinary sheets drop the strip and show
+ * their backdrop at full strength on open instead, so the top sample is final at once
+ * (closing still fades). The full-screen drawer covers the masthead anyway. */
+@media (max-width: 699px) {
+    .sheet:not(.navigation-drawer)::before { display: none; }
+    .sheet.is-open:not(.navigation-drawer) .sheet-backdrop { transition: none; }
+}
 .sheet-panel {
     position: relative;
+    z-index: 2;
     display: flex;
     flex-direction: column;
     width: 100%;
     max-height: calc(var(--visual-viewport-height, 100dvh) - var(--safe-top) - 12px);
     border-radius: var(--r-xl) var(--r-xl) 0 0;
     background: var(--elevated);
-    box-shadow: var(--shadow-3), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    /* No drop shadow on the bottom sheet: while it waits below the screen the shadow
+     * spills over the bottom edge strip and Safari samples a darker bar. */
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
     transform: translateY(100%);
     transition: transform var(--t-slow) var(--ease-out);
     overscroll-behavior: contain;
@@ -1316,6 +1358,7 @@ a.cover:active { transform: scale(0.98); }
     .sheet { align-items: center; padding: calc(var(--safe-top) + 24px) calc(var(--safe-right) + 24px) calc(var(--safe-bottom) + 24px) calc(var(--safe-left) + 24px); }
     .sheet-panel {
         width: min(560px, 100%);
+        box-shadow: var(--shadow-3), inset 0 1px 0 rgba(255, 255, 255, 0.06);
         max-height: min(820px, 100%);
         border-radius: var(--r-xl);
         transform: translateY(10px) scale(0.985);
@@ -1324,6 +1367,7 @@ a.cover:active { transform: scale(0.98); }
     }
     .sheet.is-open .sheet-panel { opacity: 1; }
     .sheet-grabber { display: none; }
+    .sheet::before, .sheet::after { display: none; }
     .sheet-head { padding: 16px 14px 8px 24px; }
     .sheet-body { padding: 4px 24px 24px; }
     .sheet.is-wide .sheet-panel { width: min(860px, 100%); }
@@ -1335,9 +1379,14 @@ a.cover:active { transform: scale(0.98); }
     width: 100%; height: 100%; max-height: 100%; border-radius: 0;
     transform: translateX(-100%); opacity: 1;
     padding-top: var(--safe-top);
+    /* No top highlight: it reads as a seam under Safari's status bar. */
+    box-shadow: none;
 }
 .navigation-drawer.is-open .sheet-panel { transform: translateX(0); }
 .navigation-drawer .sheet-grabber { display: none; }
+/* Full-screen drawer: both edges should sample the panel colour, not a dim page. */
+.navigation-drawer .sheet-backdrop { background: var(--elevated); }
+.navigation-drawer { --edge-top: var(--elevated); }
 .navigation-drawer .sheet-head { padding: 12px max(16px, var(--safe-right)) 12px max(20px, var(--safe-left)); }
 .navigation-drawer .sheet-body { flex: 1; padding-inline: max(20px, var(--safe-left)) max(20px, var(--safe-right)); }
 .navigation-drawer .nav-item { flex-direction: row; justify-content: flex-start; width: 100%; }
@@ -1566,7 +1615,8 @@ a.cover:active { transform: scale(0.98); }
     color: var(--text);
     font-size: 14px;
     line-height: 1.45;
-    box-shadow: var(--shadow-3), inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+    /* A tight shadow: a wide one leaves a murky halo over the page behind. */
+    box-shadow: 0 4px 12px -4px rgba(0, 0, 0, 0.45), inset 0 0 0 1px rgba(255, 255, 255, 0.08);
     overflow-wrap: anywhere;
     opacity: 0;
     transform: translateY(8px);

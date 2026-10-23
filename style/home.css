@@ -59,7 +59,6 @@
     background: var(--surface);
     box-shadow: var(--line-inset);
     isolation: isolate;
-    container-type: inline-size;
 }
 .random-backdrop {
     position: absolute;
@@ -218,17 +217,16 @@
     --btn-press: rgba(255, 197, 61, 0.26);
     box-shadow: inset 0 0 0 1px var(--accent-line);
 }
-/* A narrow card makes 稍后再看 a square icon button; its label stays for screen readers. */
-@container (max-width: 759px) {
-    .random-actions [data-random-later] { padding: 0; }
-    .random-actions [data-random-later] span {
-        position: absolute;
-        width: 1px;
-        height: 1px;
-        overflow: hidden;
-        clip: rect(0 0 0 0);
-        white-space: nowrap;
-    }
+/* A narrow card (no [data-wide], set from its width by index.js) makes 稍后再看 a square
+   icon button; its label stays for screen readers. */
+.random:not([data-wide]) .random-actions [data-random-later] { padding: 0; }
+.random:not([data-wide]) .random-actions [data-random-later] span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
 }
 /* Phones: the header row sits close to the card edge and the cover. */
 @media (max-width: 699px) {
@@ -273,11 +271,9 @@
     .random-actions { align-self: end; }
 }
 @media (min-width: 700px) and (pointer: coarse) { .random-tags { max-height: 70px; } }
-@container (min-width: 760px) {
-    .random-actions { display: flex; }
-    /* Same width for all three, wide enough for “已在稍后再看”, so toggling never shifts the row. */
-    .random-actions .btn { flex: 0 0 auto; min-width: 140px; }
-}
+.random[data-wide] .random-actions { display: flex; }
+/* Same width for all three, wide enough for “已在稍后再看”, so toggling never shifts the row. */
+.random[data-wide] .random-actions .btn { flex: 0 0 auto; min-width: 140px; }
 @media (min-width: 1100px) {
     .random { grid-template-columns: 248px minmax(0, 1fr); gap: 16px 36px; padding: 28px; }
     .random-title { font-size: 28px; }

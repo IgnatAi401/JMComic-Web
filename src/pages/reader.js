@@ -6,6 +6,7 @@ import { chaptersOf } from "../ui/chapters.js";
 import { detailUrl, escapeHtml, readerUrl } from "../ui/dom.js";
 import { Comments } from "../ui/comments.js";
 import { Sheet } from "../ui/overlay.js";
+import { seriesIdOf } from "../ui/tracking.js";
 import { ReaderViewport } from "../reader/ReaderViewport.js";
 import { icon } from "../ui/icons.js";
 import { renderPageError } from "../ui/states.js";
@@ -19,7 +20,7 @@ export class ReaderPage {
         if (!/^\d+$/.test(this.chapterId || "") || (this.albumId && !/^\d+$/.test(this.albumId))) throw new Error("章节或作品 ID 无效");
         await jmApi.init();
         this.chapter = await jmApi.getComicChapter(this.chapterId);
-        this.albumId ||= String(this.chapter.series_id || this.chapter.id);
+        this.albumId ||= seriesIdOf(this.chapter);
         this.viewport = new ReaderViewport(document.querySelector(".reader-images"), this.chapter, (value) => this.progress(value));
         const startPage = Number(params.get("page"));
         if (Number.isInteger(startPage) && startPage > 1) this.viewport.seek(startPage);
