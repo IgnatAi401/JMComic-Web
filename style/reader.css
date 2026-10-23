@@ -1,24 +1,84 @@
-.reader-body { --nav-w: 0px; --tabbar-h: 112px; --chrome-bottom: calc(var(--tabbar-h) + var(--safe-bottom) + 12px); background: #0c0c0e; }
+.reader-body { --nav-w: 0px; --tabbar-h: 100px; --chrome-bottom: calc(var(--tabbar-h) + var(--safe-bottom) + 12px); background: #0c0c0e; }
 .reader-page.page { padding: 0; max-width: none; }
 .reader-body .app-main { padding-top: 0; }
-/* One bottom panel; leave the viewport edges clear for Safari's browser chrome.
- * Keep image scrolling free of expensive blur effects. */
+/* One floating bottom panel; leave the viewport edges clear for Safari's browser chrome.
+ * Keep image scrolling free of expensive blur effects: the panel is an opaque solid. */
 .reader-tools {
     position: fixed; z-index: 15;
-    left: calc(var(--safe-left) + 12px); right: calc(var(--safe-right) + 12px);
-    bottom: calc(var(--safe-bottom) + 12px);
-    width: auto; max-width: 680px; margin-inline: auto;
-    padding: 4px 8px 7px;
-    background: rgba(38, 40, 46, .72);
-    border: 1px solid var(--line-strong); border-radius: var(--r-lg);
-    box-shadow: var(--shadow-2); transition: opacity var(--t-med);
+    left: calc(var(--safe-left) + 10px); right: calc(var(--safe-right) + 10px);
+    bottom: calc(var(--safe-bottom) + 10px);
+    max-width: 640px; margin-inline: auto;
+    padding: 4px 6px;
+    /* Fully opaque: artwork must never show through the controls. */
+    background: #18181c;
+    /* A hairline only, no drop shadow: the panel floats 10px above the edge where Safari
+     * clips the page, so any shadow reaching past it ends in a hard line. */
+    border: 1px solid rgba(255, 255, 255, .12); border-radius: var(--r-xl);
+    /* No will-change here: on iOS Safari it left the decoded canvases painting blank.
+     * Fade only, never slide: a panel moving toward the bottom edge gets sampled by Safari,
+     * which then paints the area under its toolbar in the panel's black and keeps it. */
+    transition: opacity var(--t-med) var(--ease), visibility 0s;
 }
-.reader-heading { display: flex; align-items: center; gap: 8px; min-height: 48px; padding-bottom: 4px; border-bottom: 1px solid var(--line); }
-.reader-heading > div { min-width: 0; flex: 1; }
-.reader-heading .icon-btn { flex: none; background: none; border: 0; }
-.reader-title { font: 550 13px/1.4 var(--font); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.reader-subtitle { color: var(--text-2); font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.reader-actions { display: grid; grid-template-columns: 1fr 1fr 1.4fr 1fr 1fr; align-items: center; padding-top: 4px; }
+.reader-focus .reader-tools {
+    visibility: hidden; opacity: 0; pointer-events: none;
+    transition: opacity var(--t-med) var(--ease), visibility 0s var(--t-med);
+}
+.reader-tools .icon-btn { flex: none; width: 44px; height: 44px; }
+.reader-heading { display: flex; align-items: center; gap: 2px; min-height: 48px; }
+.reader-heading-copy { flex: 1; min-width: 0; padding-inline: 4px; }
+.reader-title { font: 600 13.5px/1.35 var(--font); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.reader-subtitle { color: var(--text-2); font-size: 11.5px; line-height: 1.4; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.reader-subtitle:empty { display: none; }
+.reader-scrubber { display: flex; align-items: center; gap: 2px; min-height: 48px; border-top: 1px solid var(--line); }
+.reader-scrubber[hidden] { display: none; }
+.reader-position {
+    flex: none; min-width: 72px; height: 36px; padding: 0 8px;
+    border: 0; border-radius: var(--r-sm); background: #222227; box-shadow: none;
+    color: var(--text-2); font: 500 12px/1 var(--font-mono); font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+.reader-position b { color: var(--accent-text); font-size: 14px; font-weight: 650; }
+.reader-position i { font-style: normal; color: var(--text-3); margin-inline: 3px; }
+.reader-position.is-scrubbing { background: #3a3220; }
+/* Native range input restyled; WebKit paints the filled part from --fill. */
+.reader-slider {
+    --fill: 0%;
+    flex: 1; min-width: 0; height: 44px; margin: 0 8px;
+    background: transparent; touch-action: none; cursor: pointer;
+    -webkit-appearance: none; appearance: none;
+}
+.reader-slider::-webkit-slider-runnable-track {
+    height: 4px; border-radius: 2px;
+    background: linear-gradient(to right, var(--accent) var(--fill), #34343b var(--fill));
+}
+.reader-slider::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 20px; height: 20px; margin-top: -8px; border-radius: 50%;
+    background: var(--text); border: 0; box-shadow: 0 1px 4px rgba(0, 0, 0, .5);
+}
+.reader-slider::-moz-range-track { height: 4px; border-radius: 2px; background: #34343b; }
+.reader-slider::-moz-range-progress { height: 4px; border-radius: 2px; background: var(--accent); }
+.reader-slider::-moz-range-thumb { width: 20px; height: 20px; border-radius: 50%; border: 0; background: var(--text); }
+.reader-slider:focus-visible { outline: none; }
+.reader-slider:focus-visible::-webkit-slider-thumb { box-shadow: var(--focus-ring); }
+/* Single-chapter works have nowhere to go; keep the slider wide instead. */
+.reader-tools.is-single :is([data-reader-prev], [data-reader-next], [data-reader-chapters]) { display: none; }
+.reader-tools.is-single .reader-scrubber { padding-left: 6px; }
+/* Reader sheets leave the page unpinned (overlay.js "contain"), so the artwork behind stays put.
+ * Whenever anything fixed covers the top edge, Safari re-tints its status bar from it: a dimming
+ * backdrop flickered through several colours and left a wrong tint, an opaque one blacked out the page.
+ * So reader sheets keep clear of the top edge and draw no backdrop or top strip.
+ * Keep the shared bottom sampling strip: it supplies the panel colour from the first animation
+ * frame and disappears after opening, just like the home page sheets. The transparent backdrop
+ * still closes on tap. */
+.reader-body .sheet {
+    --reader-sheet-gap: calc(var(--safe-top) + 64px);
+    top: calc(var(--visual-viewport-top, 0px) + var(--reader-sheet-gap));
+    height: calc(100vh - var(--reader-sheet-gap));
+    height: calc(var(--visual-viewport-height, 100dvh) - var(--reader-sheet-gap));
+}
+.reader-body .sheet-panel { max-height: 100%; }
+.reader-body .sheet-backdrop { background: transparent; }
+.reader-body .sheet::before { display: none; }
 /* Clip stray horizontal overflow so the strip never drifts sideways on touch screens. */
 .reader-body { overflow-x: clip; }
 /* Every page shares the column width, so slices of one strip line up seamlessly.
@@ -31,31 +91,24 @@
     height: auto !important;
 }
 .reader-images > .reader-page[data-state="error"] { aspect-ratio: auto; }
-.reader-images > .reader-page[data-state="pending"]::after, .reader-images > .reader-page[data-state="rendering"]::after { content: "正在载入第 " attr(data-page-number) " 页"; position: absolute; inset: 0; display: grid; place-items: center; color: var(--text-3); font-size: 12px; pointer-events: none; }
+/* Tall pages would centre the label off screen and read as a blank page; keep it near the top. */
+.reader-images > .reader-page[data-state="pending"]::after, .reader-images > .reader-page[data-state="rendering"]::after { content: "正在载入第 " attr(data-page-number) " 页"; position: absolute; inset: 0; display: grid; place-items: start center; padding-top: min(40svh, 45%); color: var(--text-3); font-size: 12px; pointer-events: none; }
 .reader-page img, .reader-page canvas { display: block; width: 100%; height: auto; }
 .reader-images > .reader-page > div:not(.reader-image-error) { width: 100%; }
 .reader-image-error { min-height: 55svh; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 20px; padding: 24px; text-align: center; color: var(--text-2); }
 .reader-image-error button { min-height: 44px; background: var(--surface-3); border: 1px solid var(--line-strong); border-radius: var(--r-sm); padding: 10px 20px; }
-.reader-tool { display: flex; flex-direction: column; gap: 4px; align-items: center; justify-content: center; min-width: 0; min-height: 50px; border: 0; border-radius: var(--r-sm); color: var(--text-2); background: none; }
-.reader-tool > span:not(.mono) { font-size: 24px; line-height: 24px; }
-.reader-tool small { font-size: 10px; }
-.reader-tool[aria-disabled="true"], a.btn[aria-disabled="true"] { opacity: .3; pointer-events: none; }
-.reader-position .mono { font-size: 13px; }
-.reader-position b { color: var(--accent-text); font-size: 18px; }
-.reader-position i { font-style: normal; color: var(--text-3); }
-.reader-track { position: absolute; left: 12px; top: 0; right: 12px; height: 2px; background: var(--surface-3); }
-.reader-track-fill { display: block; height: 100%; width: 0; background: var(--accent); }
-.reader-focus .reader-tools { visibility: hidden; opacity: 0; pointer-events: none; }
-.reader-afterword { width: min(100%, 850px); padding: 40px 20px 20px; margin: 0 auto; }
+a.btn[aria-disabled="true"] { opacity: .3; pointer-events: none; }
+/* Leave room under the comments for the floating panel. */
+.reader-afterword { width: min(100%, 850px); padding: 40px 20px calc(var(--chrome-bottom) + 24px); margin: 0 auto; }
 .reader-end { padding: 12px 0 48px; text-align: center; }
 .reader-end-title { font-size: 20px; margin: 10px 0 24px; }
 .reader-end .page-actions { justify-content: center; }
 .reader-end .reader-later { margin-top: 12px; }
 .reader-chapter-list { display: grid; gap: 8px; }
 .reader-progress-form { display: grid; gap: 18px; }
-.reader-progress-form input[type="range"] { width: 100%; min-height: 44px; accent-color: var(--accent); }
-.reader-body .toast-region { bottom: calc(var(--chrome-bottom) + 12px); }
-@media (hover: hover) { .reader-tool:hover { background: var(--hover); color: var(--text); } }
+.reader-progress-form .chip-row .chip { flex: 1; justify-content: center; }
+.reader-body .toast-region { bottom: calc(var(--chrome-bottom) + 12px); transition: bottom var(--t-med) var(--ease); }
+.reader-focus .toast-region { bottom: calc(var(--safe-bottom) + 44px); }
 @media (orientation: landscape) {
     /* Size the column for a typical portrait page to fit the screen height;
      * wide pages then stay at the same width instead of filling the screen. */
@@ -69,12 +122,9 @@
     }
 }
 @media (max-height: 500px) and (orientation: landscape) {
-    .reader-body { --tabbar-h: 60px; }
-    .reader-tools { display: flex; align-items: center; gap: 8px; max-width: 900px; padding-block: 4px; }
-    .reader-heading { width: 30%; min-width: 0; border-bottom: 0; border-right: 1px solid var(--line); padding: 0 8px 0 0; }
-    .reader-actions { flex: 1; min-width: 0; padding-top: 0; }
-    .reader-tool { min-height: 44px; }
+    .reader-body { --tabbar-h: 56px; }
+    .reader-tools { display: flex; align-items: center; max-width: 960px; padding-block: 2px; }
+    .reader-heading { flex: 0 1 42%; min-width: 0; }
+    .reader-scrubber { flex: 1; min-width: 0; border-top: 0; border-left: 1px solid var(--line); padding-left: 4px; }
 }
-@media (prefers-reduced-motion: reduce) { .reader-tools { transition: none; } }
 
-@media (prefers-reduced-transparency: reduce) { .reader-tools { background: var(--bg-raised); } }

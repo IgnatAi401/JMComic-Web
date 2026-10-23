@@ -8,11 +8,32 @@ import { icon } from "./icons.js";
 const scrollLocks = new Set();
 let scrollLockY = 0;
 let previousBodyStyles = null;
+let lockMode = "pin";
+let activeLockMode = null;
+
+/*
+ * "pin" fixes the body in place, the only lock iOS Safari fully honours. On a very long page
+ * (the reader) that relayouts everything, resets the scroll position for a frame and resizes
+ * Safari's toolbars, so the page flickers; "contain" leaves the page alone and only swallows
+ * scroll gestures that start outside a sheet's own scrolling body.
+ */
+export const setPageScrollLockMode = (mode) => { lockMode = mode === "contain" ? "contain" : "pin"; };
+
+const swallowOutsideScroll = (event) => {
+    const scroller = event.target.closest?.(".sheet-body");
+    if (!scroller || scroller.scrollHeight <= scroller.clientHeight) event.preventDefault();
+};
 
 export const lockPageScroll = (owner) => {
     if (scrollLocks.has(owner)) return;
     scrollLocks.add(owner);
     if (scrollLocks.size > 1) return;
+    activeLockMode = lockMode;
+    if (activeLockMode === "contain") {
+        document.addEventListener("touchmove", swallowOutsideScroll, { passive: false });
+        document.addEventListener("wheel", swallowOutsideScroll, { passive: false });
+        return;
+    }
     scrollLockY = window.scrollY;
     const style = document.body.style;
     previousBodyStyles = {
@@ -36,6 +57,11 @@ export const lockPageScroll = (owner) => {
 
 export const unlockPageScroll = (owner) => {
     if (!scrollLocks.delete(owner) || scrollLocks.size) return;
+    if (activeLockMode === "contain") {
+        document.removeEventListener("touchmove", swallowOutsideScroll, { passive: false });
+        document.removeEventListener("wheel", swallowOutsideScroll, { passive: false });
+        return;
+    }
     Object.assign(document.body.style, previousBodyStyles || {});
     previousBodyStyles = null;
     const root = document.documentElement;

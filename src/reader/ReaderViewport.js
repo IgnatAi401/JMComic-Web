@@ -24,8 +24,13 @@ export class ReaderViewport {
         window.addEventListener("scroll", this.schedule, { passive: true });
         window.addEventListener("resize", this.schedule);
         window.addEventListener("jm-settings-change", (event) => this.loader.setBatchSize(event.detail?.imageLoadBatchSize));
-        window.addEventListener("wheel", () => { this.seeking = null; }, { passive: true });
-        root.addEventListener("touchstart", () => { this.seeking = null; }, { passive: true });
+        // Any reader-driven scroll ends a seek; otherwise realign() keeps snapping back to the target.
+        // Capture runs before page shortcuts, so a key that starts a new seek still keeps it.
+        const cancelSeek = () => { this.seeking = null; };
+        window.addEventListener("wheel", cancelSeek, { passive: true });
+        window.addEventListener("keydown", cancelSeek, { capture: true });
+        window.addEventListener("pointerdown", cancelSeek, { capture: true, passive: true });
+        root.addEventListener("touchstart", cancelSeek, { passive: true });
         window.addEventListener("pagehide", () => { cancelAnimationFrame(this.frame); this.frame = 0; });
         window.addEventListener("pageshow", this.schedule);
         this.schedule();
