@@ -279,7 +279,7 @@ ul, ol { padding: 0; list-style: none; }
 }
 .nav-search input::placeholder { color: var(--text-3); }
 .nav-search input:focus { border-color: var(--accent-line); background: var(--surface-2); box-shadow: none; }
-.nav-search svg {
+.nav-search > svg {
     position: absolute;
     left: 11px;
     top: 50%;
