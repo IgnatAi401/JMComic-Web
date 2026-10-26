@@ -20,7 +20,7 @@ jobs:
       - name: Collect site files
         run: |
           mkdir _site
-          cp -R *.html favicon.ico apple-touch-icon.png image _headers _site/
+          cp -R *.html robots.txt favicon.ico apple-touch-icon.png image _headers _site/
           # JS/CSS go under a content-hash folder so browsers can cache them forever;
           # relative imports inside the modules inherit the prefix automatically.
           version=$(find src style -type f | sort | xargs sha256sum | sha256sum | cut -c1-10)
