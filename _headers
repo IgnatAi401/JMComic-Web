@@ -1,3 +1,7 @@
 # Cloudflare static asset headers. Files under /v/<hash>/ never change (see deploy.yml).
+# Keep every page out of search engines; robots.txt must still allow crawling so they can see this.
+/*
+  X-Robots-Tag: noindex, nofollow
+
 /v/*
   Cache-Control: public, max-age=31536000, immutable
