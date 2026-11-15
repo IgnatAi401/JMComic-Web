@@ -31,6 +31,8 @@ const ensureSheet = () => {
     sheet = new Sheet({
         name: "changelog",
         title: "更新日志",
+        // 不固定 body：固定后 Safari 底栏下面画不出页面，只剩一片底色。
+        scrollLock: "contain",
         // Closing without dismissing waits for the next visit, not the next page.
         onClose: () => writeSessionStorage(CLOSED_KEY, LATEST_VERSION),
     });

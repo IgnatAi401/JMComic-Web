@@ -189,8 +189,9 @@ body[data-page="history-migration"] { --nav-w: 0px; --tabbar-h: 0px; }
     .detail-authors.is-expanded, .is-managing-preferences .detail-authors { grid-column: 1 / -1; grid-row: 5; height: auto; max-height: none; margin-top: 16px; line-height: 26px; white-space: normal; }
     .detail-stats { grid-column: 2; grid-row: 4; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 12px; margin-top: 12px; }
     .detail-stats dd { font-size: 15px; }
-    .detail-byline > .detail-byline-actions { grid-column: 1 / -1; grid-row: 6; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 18px; }
-    .detail-byline-actions > .btn { --btn-bg: var(--surface); }
+    .detail-byline > .detail-byline-actions { grid-column: 1 / -1; grid-row: 6; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 18px; }
+    .detail-byline-actions > .btn { --btn-bg: var(--surface); min-width: 0; padding-inline: 6px; gap: 4px; white-space: nowrap; }
+    .detail-byline-actions > .btn > span { overflow: hidden; text-overflow: ellipsis; }
     .detail-tags { grid-column: 1 / -1; grid-row: 7; margin-top: 12px; }
     /* Three rows of tags: coarse-pointer tags are 32px tall with 6px gaps. */
     .detail-tags.is-folded { max-height: 108px; overflow: hidden; }

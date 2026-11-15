@@ -1347,6 +1347,12 @@ a.cover:active { transform: scale(0.98); }
         background: inherit;
         pointer-events: none;
     }
+    /* 打开面板时 body 被固定住，键盘弹出后 Safari 用 body 的背景色填充面板以下的区域
+     * （延伸块画不到那里），默认是页面底色，看起来是一片黑。输入时把 body 的背景色
+     * 换成面板色，再叠一层页面底色的渐变，页面本身看起来不变，只改 Safari 取到的颜色。 */
+    body:has(> .sheet.is-open:not(.navigation-drawer, .changelog-sheet) :is(input, textarea):focus) {
+        background: linear-gradient(var(--bg), var(--bg)) var(--elevated);
+    }
 }
 .sheet-panel {
     position: relative;
@@ -1441,6 +1447,12 @@ a.cover:active { transform: scale(0.98); }
 .changelog-sheet::before,
 .changelog-sheet::after { display: none; }
 .changelog-sheet .sheet-backdrop { transition: none; }
+/* 手机上贴满屏幕的半透明遮罩会被 Safari 当成固定元素，把底栏下方填成一整块不透明的深色。
+ * 改为遮罩透明（仍可点击关闭），直接把页面调暗，底栏下面照常显示变暗的页面。 */
+@media (max-width: 699px) {
+    .changelog-sheet .sheet-backdrop { background: transparent; }
+    body:has(> .changelog-sheet.is-open) > :not(.sheet) { filter: brightness(0.38); }
+}
 .changelog-sheet .sheet-panel {
     width: min(520px, 100%);
     max-height: min(640px, 100%);

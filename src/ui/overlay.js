@@ -24,11 +24,11 @@ const swallowOutsideScroll = (event) => {
     if (!scroller || scroller.scrollHeight <= scroller.clientHeight) event.preventDefault();
 };
 
-export const lockPageScroll = (owner) => {
+export const lockPageScroll = (owner, mode = lockMode) => {
     if (scrollLocks.has(owner)) return;
     scrollLocks.add(owner);
     if (scrollLocks.size > 1) return;
-    activeLockMode = lockMode;
+    activeLockMode = mode === "contain" ? "contain" : "pin";
     if (activeLockMode === "contain") {
         document.addEventListener("touchmove", swallowOutsideScroll, { passive: false });
         document.addEventListener("wheel", swallowOutsideScroll, { passive: false });
@@ -115,12 +115,13 @@ const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]):not([t
 let sheetCount = 0;
 
 export class Sheet {
-    constructor({ name, title = "", wide = false, onOpen = null, onClose = null } = {}) {
+    constructor({ name, title = "", wide = false, scrollLock = undefined, onOpen = null, onClose = null } = {}) {
         bindEscape();
         const id = `sheet-${name || ++sheetCount}`;
         this.name = name;
         this.onOpen = onOpen;
         this.onClose = onClose;
+        this.scrollLock = scrollLock;
         this.isOpen = false;
         this.root = document.createElement("div");
         this.root.className = `sheet${wide ? " is-wide" : ""}`;
@@ -158,7 +159,7 @@ export class Sheet {
         openSheets.push(this);
         // Pinning the body is when Safari 26+ samples its bar colours; the static edge
         // strips in app.css (.sheet::before/::after) make that first sample final.
-        lockPageScroll(this);
+        lockPageScroll(this, this.scrollLock);
         syncModalBackground();
         this.root.inert = false;
         this.root.classList.add("is-open");
