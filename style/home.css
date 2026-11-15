@@ -7,9 +7,11 @@
 }
 .random { grid-area: random; }
 .home-side { grid-area: side; min-width: 0; margin-top: 40px; }
-/* The section after a hidden one leads the sidebar, so it drops its own gap. */
-.home-side > [hidden] + .continue { margin-top: 0; }
-.shelves { grid-area: shelves; margin-top: 36px; min-width: 0; }
+/* Only a section with a visible one before it gets the gap, so hidden sections
+   (anywhere in the list) never swallow the spacing between the visible ones. */
+.home-side > .continue { margin-top: 0; }
+.home-side > .continue:not([hidden]) ~ .continue { margin-top: 40px; }
+.shelves { grid-area: shelves; margin-top: 40px; min-width: 0; }
 
 @media (min-width: 1440px) {
     .home-layout {
@@ -28,8 +30,7 @@
     }
     .home-side { margin-top: 0; }
     .home-side::-webkit-scrollbar { display: none; }
-    .home-side > .continue + .continue { margin-top: 28px; }
-    .home-side > [hidden] + .continue { margin-top: 0; }
+    .home-side > .continue:not([hidden]) ~ .continue { margin-top: 28px; }
     /* Nothing saved yet: drop the empty sidebar column instead of leaving a gap.
        While the library loads ([data-pending]) the column stays reserved, so the
        usual case — saved items — doesn't squeeze the main column in afterwards. */
@@ -284,7 +285,8 @@
 .continue-list {
     display: grid;
     grid-auto-flow: column;
-    grid-auto-columns: minmax(232px, 72%);
+    /* A fixed track width: minmax() let a lone card grow wider than cards in fuller rows. */
+    grid-auto-columns: max(232px, 72%);
     gap: 10px;
     margin-inline: calc(var(--gutter) * -1);
     padding: 0 var(--gutter) 4px;

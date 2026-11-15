@@ -68,7 +68,7 @@ class ChapterPage {
             <div class="detail-cover">${coverHtml(album, { eager: true })}</div>
             <div class="detail-copy"><p class="eyebrow">JM ${escapeHtml(album.id)} · ${this.chapters.length > 1 ? "系列作品" : "单篇作品"}</p>
                 <h1 class="detail-title">${escapeHtml(album.name)}</h1>
-                <div class="detail-byline"><span class="detail-authors is-folded"></span><span class="detail-byline-actions"><button class="btn btn-ghost btn-sm" type="button" data-manage-preferences aria-pressed="false">${icon("sliders")}<span>管理偏好</span></button><button class="btn btn-ghost btn-sm" type="button" data-translate aria-pressed="false">${icon("translate")}<span>翻译标题</span></button>${this.subscribeHtml()}</span></div>
+                <div class="detail-byline"><span class="detail-authors is-folded"></span><span class="detail-byline-actions"><button class="btn btn-ghost btn-sm" type="button" data-manage-preferences aria-pressed="false">${icon("sliders")}<span>管理偏好</span></button>${this.subscribeHtml()}<button class="btn btn-ghost btn-sm" type="button" data-translate aria-pressed="false">${icon("translate")}<span>翻译标题</span></button></span></div>
                 <div class="tag-list detail-tags">${preferenceTagsHtml(album.tags)}</div>
                 <button class="detail-fold" type="button" data-fold-tags aria-expanded="false" hidden>展开全部标签</button>
                 ${asText(album.description) ? `<p class="detail-description">${escapeHtml(asText(album.description))}</p>` : ""}
