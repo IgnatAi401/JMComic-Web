@@ -361,7 +361,6 @@
 
 /* ---- Shelves ---- */
 
-.shelf-sub { margin-left: 6px; color: var(--text-3); font-size: 13px; font-weight: 500; letter-spacing: 0; }
 /* On iPhone each shelf is a swipeable rail; wider screens use the shared .comic-grid. */
 @media (max-width: 699px) {
     .shelf-items {

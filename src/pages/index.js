@@ -343,10 +343,9 @@ async function renderShelves() {
         const title = cleanLabel(section.title);
         const slug = displaySlug(section.slug);
         const heading = slug || title || "精选";
-        const sub = slug && title && slug !== title ? title : "";
         return `<section class="section shelf" aria-labelledby="shelf-${sectionIndex}">
             <div class="section-head">
-                <h2 class="section-title" id="shelf-${sectionIndex}">${escapeHtml(heading)}${sub ? ` <small class="shelf-sub">${escapeHtml(sub)}</small>` : ""}</h2>
+                <h2 class="section-title" id="shelf-${sectionIndex}">${escapeHtml(heading)}</h2>
                 <span class="section-meta num">${section.content.length} 部</span>
             </div>
             <div class="comic-grid shelf-items">${section.content.map((comic) => comicCardHtml(comic)).join("")}</div>
