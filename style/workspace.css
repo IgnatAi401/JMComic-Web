@@ -62,25 +62,23 @@
 @media (min-width: 560px) {
     .preference-group { grid-template-columns: 112px minmax(0, 1fr); gap: 16px; padding-block: 14px; }
 }
+/* 手机：输入框和按钮同一行、偏好选项在下一行；分组标题放到标签上方，标签铺满整行。 */
 @media (max-width: 559px) {
-    .preference-add .segmented { display: flex; width: 100%; }
-    .preference-actions { width: 100%; }
-    .preference-actions .btn { flex: 1; }
+    .preference-form { padding: 14px; }
+    .preference-add { gap: 8px; }
+    .preference-add .input { flex: 1 1 140px; min-width: 0; }
+    .preference-add .segmented { order: 1; display: flex; width: 100%; }
+    .preference-group { grid-template-columns: minmax(0, 1fr); gap: 8px; padding: 12px 14px 14px; }
+    .preference-group-title, .subscription-aliases .preference-group-title { min-height: 0; font-size: 13.5px; }
+    .preference-chip { min-height: 34px; font-size: 14px; }
+    .preference-chip button { padding: 0 2px 0 10px; }
+    .preference-chip button + button { padding: 0 9px 0 4px; }
 }
 .history-migration-page { --nav-w: 0px; }
 body[data-page="history-migration"] { --nav-w: 0px; --tabbar-h: 0px; }
 
 /* Library */
-.library-tabs { width: fit-content; max-width: 100%; overflow-x: auto; }
-.library-tabs button { white-space: nowrap; }
-.library-layout { display: grid; gap: 24px; margin-top: 28px; }
-.library-results, .library-filters { min-width: 0; }
-.library-filters:has(.folder-tabs:empty):has(.rating-filters[hidden]) { display: none; }
-.library-heading { margin-bottom: 20px; }
-.folder-tabs button, .rating-filters button { min-height: 44px; padding: 8px 12px; border: 1px solid var(--line); border-radius: var(--r-sm); background: none; text-align: left; }
-.folder-tabs button.active, .rating-filters button.active { background: var(--accent-soft); border-color: var(--accent-line); color: var(--accent-text); }
-.rating-filters span { margin-left: 8px; font-size: 12px; color: var(--text-3); }
-.library-grid > .state { grid-column: 1 / -1; }
+.library-grid > .state, .subscription-grid > .state { grid-column: 1 / -1; }
 
 /* Notifications and tracking */
 .messages-layout { display: grid; gap: 28px; }
@@ -214,9 +212,6 @@ body[data-page="history-migration"] { --nav-w: 0px; --tabbar-h: 0px; }
     .detail-description { font-size: 15px; }
     .rating-buttons { grid-template-columns: repeat(10, minmax(0, 1fr)); }
     .chapter-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .library-layout:has(.rating-filters:not([hidden])) { grid-template-columns: 155px minmax(0, 1fr); }
-    .rating-filters { flex-direction: column; flex-wrap: nowrap; }
-    .rating-filters button { display: flex; justify-content: space-between; }
 }
 @media (min-width: 1000px) {
     .messages-layout { grid-template-columns: minmax(0, 1.25fr) minmax(250px, .75fr); gap: 44px; }
@@ -242,8 +237,6 @@ body[data-page="history-migration"] { --nav-w: 0px; --tabbar-h: 0px; }
 @media (max-width: 440px) {
     .notification-item { flex-wrap: wrap; }
     .notification-item time { margin-left: 18px; }
-    .library-tabs { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); width: 100%; }
-    .library-tabs button { padding-inline: 6px; font-size: 12px; }
 }
 
 /* Detail page: three restored pages at 1/4, 1/2 and 3/4 */
@@ -292,3 +285,37 @@ body[data-page="history-migration"] { --nav-w: 0px; --tabbar-h: 0px; }
     a.preview-page:hover { transform: translateY(-3px); box-shadow: var(--shadow-2); }
 }
 a.preview-page:active { transform: scale(0.98); }
+
+/* Author subscriptions: the settings list reuses the preference editor; the page lists new works. */
+.subscription-tools { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.subscription-tools .btn[data-preference] { color: var(--preference); }
+.preference-chip a { display: inline-flex; align-items: center; gap: 4px; padding: 0 4px 0 10px; color: inherit; }
+@media (hover: hover) { .preference-chip a:hover { background: var(--hover); } }
+.subscription-error { color: var(--warning); font-weight: 700; }
+.settings-section-link { color: var(--accent-text); font-size: 13px; }
+.sheet-note { margin-bottom: 14px; color: var(--text-2); font-size: 14px; }
+[data-subscribe-author][aria-pressed="true"] { color: var(--accent-text); }
+.chip[data-subscribe-author] svg { width: 16px; height: 16px; }
+.subscription-fuzzy { border-bottom: 1px solid var(--line); border-radius: var(--r-lg) var(--r-lg) 0 0; }
+.subscription-fuzzy small { color: var(--text-3); }
+.subscription-aliases { display: grid; gap: 10px; padding: 14px 16px 16px; border-top: 1px solid var(--line); }
+.subscription-aliases.is-disabled [data-alias-list] { opacity: .45; }
+.subscription-alias-note { color: var(--text-3); font-size: 13px; }
+.subscription-alias-name { display: inline-flex; align-items: center; gap: 4px; padding: 0 4px 0 10px; }
+.subscription-alias-name small { color: var(--text-3); font-size: 11.5px; }
+.subscription-alias-empty { color: var(--text-3); font-size: 13px; }
+.subscription-alias-form { display: flex; flex-wrap: wrap; gap: 8px; }
+.subscription-alias-form .select { flex: 0 1 180px; width: auto; }
+.subscription-alias-form .input { flex: 1 1 160px; width: auto; }
+/* 订阅作者标签的名字是链接，× 和普通偏好标签一样收紧。 */
+.preference-chip :is(a, .subscription-alias-name) + button { padding: 0 9px 0 5px; opacity: .6; font-size: 15px; }
+/* 手机：工具按钮变成一行文字链接；别名表单下拉框占一行，输入框和按钮在下一行。 */
+@media (max-width: 559px) {
+    .subscription-tools { gap: 4px 14px; margin-top: 10px; }
+    .subscription-tools .btn { min-height: 32px; padding-inline: 0; }
+    .preference-chip a { padding: 0 2px 0 10px; }
+    .preference-chip :is(a, .subscription-alias-name) + button { padding: 0 9px 0 4px; }
+    .subscription-aliases { gap: 8px; padding: 12px 14px 14px; }
+    .subscription-alias-form .select { flex: 1 1 100%; }
+    .subscription-alias-form .input { flex: 1 1 0; min-width: 0; }
+}

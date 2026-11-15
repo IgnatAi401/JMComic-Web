@@ -1,3 +1,4 @@
+import { authorSubscriptions } from "../data/AuthorSubscriptions.js";
 import { jmApi } from "../api/JmcomicApi.js";
 import { libraryStore } from "../data/LibraryStore.js";
 import { writeLocalStorage } from "../utils/BrowserStorage.js";
@@ -36,6 +37,8 @@ export class ReaderPage {
         document.querySelector(".reader-afterword").hidden = false;
         this.bindLaterRemove();
         libraryStore.recordHistory(this.album).catch((error) => showToast(`历史保存失败：${error.message}`, "warning"));
+        // 看过就移出作者新作列表。
+        authorSubscriptions.dismiss(this.album?.id || this.albumId);
         writeLocalStorage(`jm_last_chapter_${this.album.id}`, String(this.chapterId));
     }
 

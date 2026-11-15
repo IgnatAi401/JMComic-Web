@@ -163,7 +163,7 @@ export class ListingResults {
         this.feed.reset();
         // Keep the sentinel from starting an old page while a new filter is debounced.
         this.feed.loading = true;
-        this.state.textContent = "正在应用筛选…";
+        this.state.textContent = "读取中…";
         this.debounce = setTimeout(() => {
             this.grid.innerHTML = "";
             this.renderedIds.clear();
@@ -189,14 +189,14 @@ export class ListingResults {
             list = await jmApi.getFilteredComics(query, page, filters);
         } catch (error) {
             if (isCurrent()) {
-                this.state.textContent = "结果暂时不可用";
-                if (page === 1 && !this.renderedIds.size) this.grid.innerHTML = stateHtml({ tone: "error", title: "没能载入结果", message: error.message || "请稍后重试" });
+                this.state.textContent = "读取失败";
+                if (page === 1 && !this.renderedIds.size) this.grid.innerHTML = stateHtml({ tone: "error", title: "没能载入结果", message: error.message || "稍后再试" });
             }
             throw error;
         }
         if (!isCurrent()) return { done: false };
         const content = Array.isArray(list?.content) ? list.content : [];
-        if (filters.hideSerial && content.length) this.state.textContent = "正在核对章节数…";
+        if (filters.hideSerial && content.length) this.state.textContent = "核对章节数…";
         const visible = await keepSingleChapterComics(content, filters.hideSerial);
         if (!isCurrent()) return { done: false };
         const total = Number(list?.total || content.length);
@@ -204,11 +204,11 @@ export class ListingResults {
         const summary = listingFilterSummary(filters);
         const totalLabel = total.toLocaleString("zh-CN");
         this.state.textContent = filters.hideSerial
-            ? `${totalLabel} 条候选 · 已加载 ${this.renderedIds.size + visible.length} 个单章 · ${summary}`
-            : `${totalLabel} 部作品 · ${summary}`;
+            ? `已加载 ${this.renderedIds.size + visible.length} 部单章 · ${summary}`
+            : `${totalLabel} 部 · ${summary}`;
         const added = this.append(visible);
         if (page === 1 && !this.renderedIds.size) {
-            this.grid.innerHTML = stateHtml({ title: "没有符合条件的作品", message: "换个关键词，或放宽筛选条件试试。" });
+            this.grid.innerHTML = stateHtml({ title: "没有符合条件的作品", message: "换个关键词或放宽筛选" });
         }
         return { done: !content.length || page >= this.maxPage, count: added };
     }

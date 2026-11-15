@@ -2,7 +2,7 @@ import { clearCache } from "../utils/BrowserCache.js";
 
 /**
  * Export and restore the user data this site keeps in localStorage: reading history,
- * bookshelf lists, preferences, reader settings and search history. The expiring API cache
+ * bookshelf lists, preferences, author subscriptions, reader settings and search history. The expiring API cache
  * (`jm_cache:`), the API server bootstrap and the JM login session are left out. A password the
  * user chose to remember is kept (in plain text) so the account still works after a restore.
  * Values are kept as the exact strings stored, so a restore reproduces them unchanged.
@@ -11,7 +11,8 @@ const APP = "JMComic-Web";
 const FORMAT_VERSION = 1;
 const MAX_FILE_BYTES = 20 * 1024 * 1024;
 const EXCLUDED_PREFIXES = ["jm_cache:"];
-const EXCLUDED_KEYS = new Set(["jm_api_bootstrap_v1", "jm_account_session", "jm_auto_checkin_attempt", "jm_auto_checkin_failure"]);
+// 作者订阅（jm_author_subscriptions_v1）随备份导出；检查时的临时锁不导出。
+const EXCLUDED_KEYS = new Set(["jm_api_bootstrap_v1", "jm_account_session", "jm_auto_checkin_attempt", "jm_auto_checkin_failure", "jm_author_subscriptions_lock"]);
 const EXTRA_KEYS = new Set(["using_imgserver_index"]);
 
 const isUserKey = (key) => typeof key === "string"

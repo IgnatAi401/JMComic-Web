@@ -7,6 +7,7 @@ import { hydrateRichCards } from "../ui/rich-cards.js";
 import { renderPageError, stateHtml } from "../ui/states.js";
 mountShell();
 const grid = document.querySelector("[data-results]");
+const state = document.querySelector("[data-result-state]");
 const seen = new Set();
 async function init() {
     await jmApi.init();
@@ -20,9 +21,10 @@ async function init() {
         if (!seen.size) grid.innerHTML = stateHtml({title:"暂时没有更新"});
         hydrateCovers(grid);
         hydrateRichCards(grid);
+        state.textContent = `已加载 ${seen.size} 部`;
         return { done: !items.length || !unique.length, count: unique.length };
     }});
-    document.querySelector("[data-refresh]").addEventListener("click", () => { grid.replaceChildren(); seen.clear(); feed.restart(); });
+    document.querySelector("[data-refresh]").addEventListener("click", () => { grid.replaceChildren(); seen.clear(); state.textContent = "读取中…"; feed.restart(); });
     await feed.restart();
 }
 init().catch((error) => renderPageError(grid, error));

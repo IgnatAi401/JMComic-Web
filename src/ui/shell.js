@@ -1,6 +1,7 @@
 import { authSession } from "../auth/AuthSession.js";
 import { autoCheckIn } from "../auth/AutoCheckIn.js";
 import { setting } from "../core/Setting.js";
+import { authorSubscriptions } from "../data/AuthorSubscriptions.js";
 import { openInNewPage } from "../utils/NavigationPolicy.js";
 import { maybeShowChangelog } from "./changelog.js";
 import { AccountPanel } from "./account.js";
@@ -19,6 +20,7 @@ const PRIMARY = [
 ];
 const PERSONAL = [
     { page: "library", label: "书架", rail: "书架", icon: "library" },
+    { page: "subscriptions", label: "订阅与追更", rail: "追更", icon: "subscribe" },
 ];
 
 const MENU_HANDOFF_MS = 200;
@@ -45,6 +47,7 @@ class AppShell {
         window.addEventListener("jm-auth-change", () => this.renderAccount());
         this.renderAccount();
         this.scheduleAutoCheckIn();
+        this.scheduleSubscriptionCheck();
         return this;
     }
 
@@ -221,6 +224,7 @@ class AppShell {
                     <div class="action-grid">
                         ${tile("latest", "最新更新", "latest")}
                         ${tile("library", "书架", "library")}
+                        ${tile("subscriptions", "订阅与追更", "subscribe")}
                         ${tile("setting", "设置", "settings")}
                         ${tile("categories", "分类浏览", "categories")}
                     </div>
@@ -281,6 +285,15 @@ class AppShell {
         };
         if (typeof requestIdleCallback === "function") requestIdleCallback(run, { timeout: 3000 });
         else setTimeout(run, 1000);
+    }
+
+    /** 每天一次的作者订阅检查：页面空闲后在后台进行，有新作时提示一次。 */
+    scheduleSubscriptionCheck() {
+        const run = () => authorSubscriptions.runDue().then((result) => {
+            if (result?.added) showToast(`作者订阅：发现 ${result.added} 部新作`, "success");
+        }).catch(() => {});
+        if (typeof requestIdleCallback === "function") requestIdleCallback(run, { timeout: 5000 });
+        else setTimeout(run, 2000);
     }
 
     async checkIn({ auto = false } = {}) {

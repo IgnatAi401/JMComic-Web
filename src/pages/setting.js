@@ -4,6 +4,7 @@ import { autoCheckIn } from "../auth/AutoCheckIn.js";
 import { mountReadingControls } from "../ui/reading-controls.js";
 import { libraryStore } from "../data/LibraryStore.js";
 import { PreferenceEditor } from "../ui/preference-editor.js";
+import { SubscriptionEditor } from "../ui/subscriptions.js";
 import { AUTHOR_LEVELS, TAG_LEVELS, preferenceMaps } from "../ui/preferences.js";
 import { clearCache } from "../utils/BrowserCache.js";
 import { showToast } from "../ui/toast.js";
@@ -43,6 +44,10 @@ const renderPreferences = () => {
 renderPreferences();
 // Keep the editors current when another tab changes the stances.
 window.addEventListener("jm-library-change", renderPreferences);
+
+new SubscriptionEditor(document.querySelector("#settings-subscription-list")).mount();
+// 从作者订阅页的“去设置”进来时滚到订阅区。
+if (location.hash === "#settings-subscriptions") document.querySelector(location.hash)?.scrollIntoView({ block: "start" });
 
 const changelogVersion = document.querySelector("[data-changelog-version]");
 if (changelogVersion && LATEST_VERSION) changelogVersion.textContent = `当前版本 ${LATEST_VERSION}`;

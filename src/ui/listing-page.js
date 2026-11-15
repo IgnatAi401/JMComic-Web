@@ -5,6 +5,7 @@ import { renderPageError } from "./states.js";
 import { showToast } from "./toast.js";
 import { searchUrl } from "./dom.js";
 import { attachSearchHistory, rememberSearch } from "./search-history.js";
+import { subscribeButtonHtml } from "./subscriptions.js";
 export async function mountListing(search = false) {
     mountShell();
     const query = search ? new URLSearchParams(location.search).get("sq") || "" : "";
@@ -20,6 +21,9 @@ export async function mountListing(search = false) {
         attachSearchHistory(form, go);
         // Every way into a search (box, tag or author link) is recorded on arrival.
         if (query.trim()) rememberSearch(query);
+        // 按作者名搜索时可以直接订阅；纯数字多半是番号，不显示。
+        const keyword = query.trim();
+        if (keyword && !/^\d+$/.test(keyword)) document.querySelector(".listing-bar-actions")?.insertAdjacentHTML("afterbegin", subscribeButtonHtml(keyword, { iconOnly: true, className: "icon-btn" }));
     }
     try {
         await jmApi.init();

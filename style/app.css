@@ -1164,6 +1164,31 @@ a.cover:active { transform: scale(0.98); }
 .rich-stats svg { flex: none; width: 13px; height: 13px; color: var(--text-3); }
 .rich-stats dd { white-space: nowrap; font-variant-numeric: tabular-nums; }
 .rich-stats [data-detail="date"] { color: var(--text-3); }
+/* 卡片上的小操作按钮（如作者订阅页的“移出列表”）。 */
+.card-folder-move {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    align-self: flex-start;
+    margin-top: auto;
+    padding: 4px 0;
+    border: 0;
+    background: transparent;
+    color: var(--text-3);
+    font: inherit;
+    font-size: 12.5px;
+    cursor: pointer;
+    -webkit-appearance: none;
+    appearance: none;
+}
+.card-folder-move svg { width: 14px; height: 14px; }
+.card-folder-move:disabled { opacity: 0.5; }
+@media (hover: hover) {
+    .card-folder-move:hover { color: var(--text); }
+}
+/* 日期和卡片操作按钮作为一组换行，按钮推到最右。 */
+.rich-stats .rich-stats-end { flex: 1 0 auto; justify-content: space-between; gap: 8px; }
+.rich-stats-end .card-folder-move { margin: -4px 0; font-size: 12px; }
 /* Takes the height the cover leaves between meta and stats (at least one row) without
    adding to the card's height; rich-cards.js folds the tags that do not fit into "+N". */
 .rich-tags { flex: 1 0 0; height: 0; min-height: 22px; gap: 4px; align-content: flex-start; overflow: hidden; }
@@ -1309,6 +1334,19 @@ a.cover:active { transform: scale(0.98); }
 @media (max-width: 699px) {
     .sheet:not(.navigation-drawer)::before { display: none; }
     .sheet.is-open:not(.navigation-drawer) .sheet-backdrop { transition: none; }
+    /* 键盘弹出时面板只占键盘上方的可见区域：往下延伸一块同色背景，
+     * 盖住面板和键盘之间的空隙，以及半透明键盘后面的页面。
+     * 更新日志是居中弹窗、不贴底，延伸会在它下面露出一块灰色，所以排除。 */
+    .sheet:not(.navigation-drawer, .changelog-sheet) .sheet-panel::after {
+        content: "";
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        height: 100vh;
+        background: inherit;
+        pointer-events: none;
+    }
 }
 .sheet-panel {
     position: relative;
@@ -1693,3 +1731,69 @@ a.cover:active { transform: scale(0.98); }
 @media (pointer: coarse) {
     .chip, .segmented button { min-height: 44px; }
 }
+
+/* 列表页共用结构（书架、订阅与追更、最新、分类、搜索、消息）：紧凑标题 → 视图标签 → 工具栏（筛选 · 数量 · 操作）→ 网格。 */
+.page-head.is-compact { margin-bottom: 12px; }
+.view-tabs {
+    display: flex;
+    gap: 22px;
+    margin-bottom: 4px;
+    border-bottom: 1px solid var(--line);
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+.view-tabs::-webkit-scrollbar { display: none; }
+.view-tabs button {
+    position: relative;
+    flex: none;
+    min-height: 42px;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--text-3);
+    font-size: 15px;
+    font-weight: 600;
+    white-space: nowrap;
+    transition: color var(--t-fast) var(--ease);
+}
+@media (hover: hover) { .view-tabs button:hover { color: var(--text); } }
+.view-tabs button[aria-pressed="true"] { color: var(--text); }
+.view-tabs button[aria-pressed="true"]::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -1px;
+    height: 2px;
+    border-radius: 2px;
+    background: var(--accent);
+}
+.list-toolbar { display: flex; align-items: center; gap: 10px; min-height: 52px; margin-bottom: 12px; }
+.toolbar-select { flex: 0 0 auto; width: auto; min-width: 0; max-width: 62%; min-height: 36px; padding-left: 12px; font-size: 14px; font-weight: 500; text-overflow: ellipsis; }
+.toolbar-status { flex: 1 1 auto; min-width: 0; overflow: hidden; color: var(--text-3); font-size: 13px; text-overflow: ellipsis; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.toolbar-status.warning { color: var(--warning); white-space: normal; }
+.toolbar-actions { display: flex; flex: none; align-items: center; gap: 2px; margin-right: -8px; }
+.toolbar-actions [hidden] { display: none; }
+.icon-btn.is-spinning svg { animation: spin 900ms linear infinite; }
+/* ⋯ 菜单 */
+.action-menu { position: relative; }
+.action-menu[hidden] { display: none; }
+.action-menu-list {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    z-index: 30;
+    display: grid;
+    min-width: 176px;
+    padding: 6px;
+    border-radius: var(--r-md);
+    background: var(--surface-2);
+    box-shadow: var(--line-inset), var(--shadow-2);
+    animation: rise var(--t-fast) var(--ease);
+}
+.action-menu-list[hidden] { display: none; }
+.action-menu-item { display: flex; align-items: center; gap: 10px; min-height: 40px; padding: 0 12px; border: 0; border-radius: 8px; background: none; color: var(--text); font-size: 14px; text-align: left; white-space: nowrap; }
+.action-menu-item svg { flex: none; width: 17px; height: 17px; color: var(--text-3); }
+.action-menu-item.is-danger, .action-menu-item.is-danger svg { color: var(--error); }
+@media (hover: hover) { .action-menu-item:hover { background: var(--hover); } }
+.action-menu-item:focus-visible { background: var(--hover); outline: none; }

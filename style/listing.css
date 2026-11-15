@@ -1,7 +1,7 @@
 .listing-head { align-items: flex-end; flex-wrap: wrap; }
 .listing-search { width: min(100%, 460px); }
 .listing-layout { display: grid; gap: 20px; }
-.listing-bar { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.listing-bar { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 34px; }
 .listing-state { color: var(--text-2); font-size: 13px; }
 .listing-bar-actions { display: flex; align-items: center; flex-shrink: 0; gap: 8px; }
 .listing-results { min-width: 0; }
@@ -40,3 +40,8 @@
 @media (max-width: 699px) {
     .listing-bar [data-filter-reset] { display: none; }
 }
+/* 统一工具栏：listing-layout 自带行距，不再叠加工具栏的下边距；筛选按钮只剩图标，数量角标贴在右上角。 */
+.listing-layout > .list-toolbar { margin-bottom: 0; }
+.icon-btn.filter-toggle { position: relative; }
+.icon-btn.filter-toggle .badge { position: absolute; top: 3px; right: 1px; min-width: 16px; height: 16px; padding: 0 4px; font-size: 10.5px; line-height: 16px; }
+.toolbar-actions .icon-btn[data-subscribe-author][aria-pressed="true"] { color: var(--accent-text); }

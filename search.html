@@ -16,7 +16,7 @@
     <a class="skip-link" href="#main">跳到主要内容</a>
     <main class="app-main" id="main" tabindex="-1">
         <div class="page listing">
-            <header class="page-head listing-head">
+            <header class="page-head listing-head is-compact">
                 <div class="page-head-copy">
                     <h1 class="page-title" data-query-title>搜索结果</h1>
                 </div>
@@ -27,14 +27,11 @@
                 </form>
             </header>
             <div class="listing-layout">
-                <div class="listing-bar">
-                    <p class="listing-state" data-result-state aria-live="polite">正在载入</p>
-                    <div class="listing-bar-actions">
-                        <button class="btn btn-outline btn-sm filter-toggle" type="button" data-filter-toggle aria-haspopup="dialog">
-                            <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>
-                            筛选 <b class="badge" data-filter-count hidden>0</b>
-                        </button>
-                        <button class="btn btn-ghost btn-sm" type="button" data-filter-reset disabled>重置筛选</button>
+                <div class="listing-bar list-toolbar">
+                    <span class="toolbar-status listing-state" data-result-state role="status">读取中…</span>
+                    <div class="listing-bar-actions toolbar-actions">
+                        <button class="icon-btn filter-toggle" type="button" data-filter-toggle aria-haspopup="dialog" aria-label="筛选" title="筛选"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg><b class="badge" data-filter-count hidden>0</b></button>
+                        <button class="btn btn-ghost btn-sm" type="button" data-filter-reset disabled>重置</button>
                     </div>
                 </div>
                 <aside class="filter-panel" aria-label="筛选条件"></aside>

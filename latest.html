@@ -16,17 +16,11 @@
     <a class="skip-link" href="#main">跳到主要内容</a>
     <main class="app-main" id="main" tabindex="-1">
         <div class="page listing">
-            <header class="page-head">
-                <div class="page-head-copy">
-                    <h1 class="page-title">最新更新</h1>
-                </div>
-                <div class="page-actions">
-                    <button class="btn btn-outline btn-sm" type="button" data-refresh>
-                        <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8 8 0 0 0-14.7-4.4L4 8"/><path d="M4 4v4h4"/><path d="M4 13a8 8 0 0 0 14.7 4.4L20 16"/><path d="M20 20v-4h-4"/></svg>
-                        刷新
-                    </button>
-                </div>
-            </header>
+            <header class="page-head is-compact"><h1 class="page-title">最新更新</h1></header>
+            <div class="list-toolbar">
+                <span class="toolbar-status" data-result-state role="status">读取中…</span>
+                <div class="toolbar-actions"><button class="icon-btn" type="button" data-refresh aria-label="刷新" title="刷新"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8 8 0 0 0-14.7-4.4L4 8"/><path d="M4 4v4h4"/><path d="M4 13a8 8 0 0 0 14.7 4.4L20 16"/><path d="M20 20v-4h-4"/></svg></button></div>
+            </div>
             <div class="comic-grid" data-results></div>
             <div class="feed-footer" data-feed></div>
         </div>
