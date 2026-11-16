@@ -32,11 +32,9 @@ class ChapterPage {
         if (!/^\d+$/.test(id || "")) throw new Error("漫画 ID 无效");
         await jmApi.init();
         await libraryStore.init();
-        let album = await jmApi.getComicAlbum(id);
+        const album = await jmApi.getComicAlbum(id);
         this.seriesId = seriesIdOf(album);
-        // A tracked series skips the 7-day album cache so new chapters show up at once.
         const tracked = this.isTracking(id);
-        if (tracked) album = await jmApi.getComicAlbum(id, { refresh: true }).catch(() => album);
         if (!album?.id || !asText(album.name)) throw new Error("没有找到这本作品");
         this.album = album;
         this.chapters = chaptersOf(album);
@@ -49,7 +47,8 @@ class ChapterPage {
         this.syncTagFold();
         this.renderChapters();
         this.renderLibraryStates();
-        if (tracked) this.markTrackedViewed().catch(() => {});
+        // Tracking is marked viewed with the fresh chapter list, not the cached one.
+        this.refreshAlbum().then(() => { if (tracked) return this.markTrackedViewed(); }).catch(() => {});
         loadPreferences().then((preferences) => { this.preferences = preferences; this.renderPreferences(); });
         // Another tab may edit stances; skip our own saves, which already re-rendered.
         window.addEventListener("jm-library-change", () => {
@@ -72,12 +71,12 @@ class ChapterPage {
                 <div class="tag-list detail-tags">${preferenceTagsHtml(album.tags)}</div>
                 <button class="detail-fold" type="button" data-fold-tags aria-expanded="false" hidden>展开全部标签</button>
                 ${asText(album.description) ? `<p class="detail-description">${escapeHtml(asText(album.description))}</p>` : ""}
-                <dl class="detail-stats"><div><dt>章节</dt><dd>${this.chapters.length}</dd></div><div><dt>页数</dt><dd>${escapeHtml(album.total_photos ?? "—")}</dd></div><div><dt>观看</dt><dd>${formatCount(album.total_views)}</dd></div><div><dt>喜欢</dt><dd>${formatCount(album.likes)}</dd></div></dl>
+                <dl class="detail-stats"><div><dt>章节</dt><dd data-chapter-count>${this.chapters.length}</dd></div><div><dt>页数</dt><dd>${escapeHtml(album.total_photos ?? "—")}</dd></div><div><dt>观看</dt><dd>${formatCount(album.total_views)}</dd></div><div><dt>喜欢</dt><dd>${formatCount(album.likes)}</dd></div></dl>
                 <div class="detail-actions"><a class="btn btn-primary" data-start-read data-navigation="same-tab">${icon("play")}<span>开始阅读</span></a><div class="detail-toggles">${watchLaterButtonHtml(album)}<button class="btn btn-outline" data-library-action="favorite" type="button" aria-pressed="false">${icon("bookmark")}<span>收藏</span></button>${this.chapters.length > 1 ? `<button class="btn btn-outline" data-library-action="track" type="button" aria-pressed="false">${icon("track")}<span>追踪连载</span></button>` : ""}</div></div>
             </div></header>
             <div class="detail-layout"><div class="detail-primary">
                 <section class="section detail-preview" aria-labelledby="preview-title"><div class="section-head"><h2 class="section-title" id="preview-title">内容预览</h2><span class="section-meta" data-preview-meta></span></div><div class="preview-strip" data-navigation-scope="same-tab"><span class="preview-page" data-state="loading"></span><span class="preview-page" data-state="loading"></span><span class="preview-page" data-state="loading"></span></div></section>
-                <section class="section"><div class="section-head"><h2 class="section-title">目录</h2><span class="section-meta">${this.chapters.length} 章</span></div><div class="chapter-list" data-navigation-scope="same-tab"></div><button class="detail-fold chapter-fold" type="button" data-fold-chapters aria-expanded="false" hidden>显示全部 ${this.chapters.length} 章</button></section>
+                <section class="section"><div class="section-head"><h2 class="section-title">目录</h2><span class="section-meta" data-chapter-meta>${this.chapters.length} 章</span></div><div class="chapter-list" data-navigation-scope="same-tab"></div><button class="detail-fold chapter-fold" type="button" data-fold-chapters aria-expanded="false" hidden>显示全部 ${this.chapters.length} 章</button></section>
                 <section class="section detail-comments"></section>
             </div><aside class="detail-secondary">
                 <section class="section detail-info"><h2 class="section-title">作品资料</h2><dl>${[["发布", formatDate(album.addtime) || "未知"], ["评论", album.comment_total ?? 0], ["编号", album.id], ["类型", isApiTrue(album.is_aids) ? "章节合集" : this.chapters.length > 1 ? "系列" : "单篇"], ["价格", album.price], ["购买状态", album.purchased], ["原始链接", album.real_link]].filter(([, value]) => !["", "0"].includes(asText(value))).map(([label, value]) => `<div><dt>${label}</dt><dd>${escapeHtml(value)}</dd></div>`).join("")}</dl>${[["关联作品", links(album.works)], ["角色", links(album.actors)]].map(([label, html]) => html ? `<h3>${label}</h3><div class="tag-list">${html}</div>` : "").join("")}</section>
@@ -233,7 +232,20 @@ class ChapterPage {
         const start = this.root.querySelector("[data-start-read]");
         start.href = readerUrl(selected.id, this.album.id);
         start.querySelector("span").textContent = last ? "继续阅读" : "开始阅读";
+        this.root.querySelector("[data-chapter-count]").textContent = this.chapters.length;
+        this.root.querySelector("[data-chapter-meta]").textContent = `${this.chapters.length} 章`;
         this.setChaptersExpanded(Boolean(this.chaptersExpanded));
+    }
+
+    /** The album cache lasts 7 days, so a page drawn from it asks JM again and adds any new chapters. */
+    async refreshAlbum() {
+        if (!jmApi.isAlbumFromCache(this.album.id)) return;
+        const fresh = await jmApi.getComicAlbum(this.album.id, { refresh: true }).catch(() => null);
+        const ids = (album) => chaptersOf(album).map((item) => String(item.id)).join(",");
+        if (!fresh?.id || ids(fresh) === ids(this.album)) return;
+        this.album = { ...this.album, series: fresh.series };
+        this.chapters = chaptersOf(this.album);
+        this.renderChapters();
     }
 
     /** Tracking follows the series, also from a chapter page; older entries may hold the chapter id. */
