@@ -18,6 +18,7 @@ import { renderPageError } from "../ui/states.js";
 import { showToast } from "../ui/toast.js";
 import { seriesAlbumOf, seriesIdOf } from "../ui/tracking.js";
 import { watchLaterButtonHtml } from "../ui/watch-later.js";
+import { RecommendButton } from "../ui/community.js";
 
 // Chapters shown before the list folds below the two-column layout (1280px); matches the nth-child rule in workspace.css.
 const CHAPTER_FOLD = 12;
@@ -59,6 +60,7 @@ class ChapterPage {
         const first = this.chapters[0];
         new PagePreview(this.root.querySelector(".detail-preview"), album, { id: first.id, label: this.chapters.length > 1 ? "第 1 章" : "全篇" }).mount();
         new Comments(this.root.querySelector(".detail-comments"), id, { total: album.comment_total }).mount();
+        new RecommendButton(this.root.querySelector(".detail-toggles"), album.id).load();
     }
 
     render() {

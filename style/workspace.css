@@ -199,6 +199,9 @@ body[data-page="history-migration"] { --nav-w: 0px; --tabbar-h: 0px; }
     .detail-description { grid-column: 1 / -1; grid-row: 9; margin-top: 16px; font-size: 14px; line-height: 1.75; }
     .detail-actions { grid-column: 1 / -1; grid-row: 10; margin-top: 20px; }
     .detail-actions > .btn-primary { min-height: 48px; }
+    /* Lower tiles on phones: icon over label, tighter spacing. */
+    .detail-toggles > .btn { min-height: 48px; padding-block: 5px; gap: 2px; }
+    .detail-toggles > .btn svg { width: 18px; height: 18px; }
 }
 /* Below the two-column detail layout (phones, tablets, iPad landscape) long chapter lists fold. */
 @media (max-width: 1279px) {

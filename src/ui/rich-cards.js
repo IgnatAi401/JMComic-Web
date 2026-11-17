@@ -98,6 +98,12 @@ export function fillRichCard(card, album, preferences) {
         likes: formatCount(album.likes),
     };
     Object.entries(values).forEach(([key, value]) => { field(card, key).textContent = value; });
+    // Cards built from an ID alone (社区推荐) learn their title here.
+    if ("fillTitle" in card.dataset && album.name) {
+        card.querySelector(".comic-title a").textContent = album.name;
+        const later = card.querySelector("[data-watch-later]");
+        if (later) later.dataset.watchLater = JSON.stringify({ id: String(album.id), name: album.name, author: authorsOf(album), cover_url: "" });
+    }
     field(card, "authors").innerHTML = preferenceAuthorsHtml(authorsOf(album), preferences.authors, { link: true, limit: CARD_AUTHORS });
     const stance = authorStance(authorsOf(album), preferences.authors);
     if (stance) card.dataset.authorPreference = stance;

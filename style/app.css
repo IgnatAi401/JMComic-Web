@@ -1809,3 +1809,67 @@ a.cover:active { transform: scale(0.98); }
 .action-menu-item.is-danger, .action-menu-item.is-danger svg { color: var(--error); }
 @media (hover: hover) { .action-menu-item:hover { background: var(--hover); } }
 .action-menu-item:focus-visible { background: var(--hover); outline: none; }
+
+/* Community: anonymous online counter, recommend button and votes */
+.community-online {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text-2);
+    font-size: 12px;
+    line-height: 16px;
+    font-variant-numeric: tabular-nums;
+}
+.community-online[hidden] { display: none; }
+.community-online i {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--success);
+    box-shadow: 0 0 0 3px var(--success-soft);
+}
+.community-online b { color: var(--text); font-weight: 600; }
+/* In the menus the counter reads like a nav row: the dot sits in the 20px icon column
+   and the text lines up with the item labels below it. */
+.nav-online, .mobile-online { min-height: 40px; padding: 0 12px; gap: 0; font-size: 13px; }
+.mobile-online { min-height: 48px; }
+.nav-online i, .mobile-online i { margin: 0 18.5px 0 6.5px; }
+.nav-online b, .mobile-online b { margin-right: 4px; font-size: 14px; }
+.page-online { margin-top: 6px; }
+@media (min-width: 700px) and (max-width: 1099px) {
+    .nav-online { min-height: 32px; padding: 0; justify-self: center; }
+    .nav-online i { margin: 0 6px 0 0; }
+    .nav-online b { margin: 0; }
+    .nav-online .community-online-label { display: none; }
+}
+.recommend-page .feed-footer[data-state="error"] .feed-status { flex-direction: column; }
+.community-recommend[aria-pressed="true"] { border-color: var(--accent-line); background: var(--accent-soft); color: var(--accent-text); }
+.vote-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; position: relative; z-index: 1; }
+.vote-count { display: inline-flex; align-items: center; gap: 3px; margin-right: 2px; color: var(--accent-text); font-size: 12px; }
+.vote-count svg { width: 14px; height: 14px; }
+.vote-count b { font-variant-numeric: tabular-nums; }
+/* A full-width row under the cover and text, so the card's top keeps its usual layout. */
+.rich-card > .vote-bar { grid-column: 1 / -1; padding-top: 8px; border-top: 1px solid var(--line); }
+.vote-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    min-height: 28px;
+    padding: 0 9px;
+    border: 1px solid var(--line-strong);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--text-2);
+    font-size: 12px;
+    font-weight: 500;
+    transition: background-color var(--t-fast) var(--ease), color var(--t-fast) var(--ease), border-color var(--t-fast) var(--ease);
+}
+.vote-btn svg { width: 14px; height: 14px; }
+.vote-btn b { font-variant-numeric: tabular-nums; color: var(--text); font-weight: 600; }
+@media (hover: hover) { .vote-btn:hover:not(:disabled) { background: var(--hover); color: var(--text); } }
+.vote-btn:disabled { opacity: 0.55; }
+.vote-btn[data-vote="good"][aria-pressed="true"] { border-color: var(--success); background: var(--success-soft); color: var(--success); }
+.vote-btn[data-vote="bad"][aria-pressed="true"] { border-color: var(--error); background: var(--error-soft); color: var(--error); }
+.vote-btn[data-vote="fun"][aria-pressed="true"] { border-color: var(--accent-line); background: var(--accent-soft); color: var(--accent-text); }
+.vote-btn[aria-pressed="true"] b { color: inherit; }
+@media (pointer: coarse) { .vote-btn { min-height: 34px; padding: 0 11px; } }

@@ -15,12 +15,13 @@ const RICH_STATS = [["chapters", "章节", "list"], ["pages", "页数", "pages"]
  * statistics and stance-coloured tags and authors. Listing APIs omit these fields,
  * so they start as placeholders and `hydrateRichCards` fills them.
  */
-export const comicCardHtml = (comic, { meta = "", highlight = false, footer = "" } = {}) => {
+/** `after` is trusted HTML shown as a full-width row under the card; `fillTitle` lets the details request fill in the title. */
+export const comicCardHtml = (comic, { meta = "", highlight = false, footer = "", after = "", fillTitle = false } = {}) => {
     const id = String(comic?.id ?? "").trim();
     const title = asText(comic?.name ?? comic?.title, "未命名作品");
     const href = detailUrl(id);
     const category = asText(comic?.category?.title);
-    return `<article class="comic-card rich-card" data-comic-id="${escapeHtml(id)}" data-details="pending">
+    return `<article class="comic-card rich-card" data-comic-id="${escapeHtml(id)}" data-details="pending"${fillTitle ? " data-fill-title" : ""}>
         ${coverHtml(comic, { href })}
         <div class="rich-card-body">
             <h3 class="comic-title"><a href="${href}">${escapeHtml(title)}</a></h3>
@@ -33,6 +34,7 @@ export const comicCardHtml = (comic, { meta = "", highlight = false, footer = ""
                 return key === "date" && footer ? `<div class="rich-stats-end">${stat}${footer}</div>` : stat;
             }).join("")}</dl>
         </div>
+        ${after}
         ${id ? watchLaterButtonHtml(comic, { compact: true }) : ""}
     </article>`;
 };
