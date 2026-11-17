@@ -285,7 +285,7 @@ function renderAuthorUpdates() {
     // 标题匹配的作品作者字段对不上，改为显示是哪位订阅作者。
     const items = authorSubscriptions.updates.slice(0, 8).map((item) => (item.via === "title" ? { ...item, author: item.sources } : item));
     renderSideList(document.querySelector(".continue.author-updates"), items, {
-        meta: (item) => `${formatDateTime(item.foundAt)} 发现`,
+        meta: (item) => (item.updateAt ? `${formatDateTime(item.updateAt * 1000)} 更新` : ""),
     });
 }
 

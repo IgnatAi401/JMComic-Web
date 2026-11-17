@@ -145,7 +145,7 @@ class SubscriptionsPage {
         }
         this.grid.innerHTML = updates.map((item) => comicCardHtml(item, {
             // 作者行已显示作者；只有标题匹配（作者字段对不上）时才注明来自哪位订阅作者。
-            meta: `${formatDateTime(item.foundAt)} 发现${item.via === "title" ? ` · 标题匹配 ${item.sources.join("、")}` : ""}`,
+            meta: [item.updateAt ? `${formatDateTime(item.updateAt * 1000)} 更新` : "", item.via === "title" ? `标题匹配 ${item.sources.join("、")}` : ""].filter(Boolean).join(" · "),
             footer: `<button class="card-folder-move" type="button" data-dismiss-update="${escapeHtml(item.id)}">${icon("check")}<span>移出</span></button>`,
         })).join("");
         this.hydrate();
