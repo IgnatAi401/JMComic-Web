@@ -66,8 +66,11 @@ class CommunityApi {
 
     recommend(id) { return this.request("/recommend", { method: "POST", body: { comic: String(id) } }); }
 
-    /** `vote` is "good", "bad" or null; `fun` is a separate tick. */
-    vote(id, vote, fun) { return this.request("/vote", { method: "POST", body: { comic: String(id), vote, fun: Boolean(fun) } }); }
+    /** `vote` is "good", "bad" or null. */
+    vote(id, vote) { return this.request("/vote", { method: "POST", body: { comic: String(id), vote } }); }
+
+    /** Add (`on`) or remove one emoji reaction by its key. */
+    react(id, reaction, on) { return this.request("/react", { method: "POST", body: { comic: String(id), reaction, on: Boolean(on) } }); }
 }
 
 export const communityApi = new CommunityApi();

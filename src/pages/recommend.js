@@ -6,7 +6,7 @@ import { Feed } from "../ui/feed.js";
 import { comicCardHtml } from "../ui/comic-card.js";
 import { hydrateCovers } from "../ui/covers.js";
 import { hydrateRichCards } from "../ui/rich-cards.js";
-import { nextVote, onlineHtml, renderOnline, voteBarHtml } from "../ui/community.js";
+import { communityBarHtml, nextVote, onlineHtml, pickReaction, renderOnline } from "../ui/community.js";
 import { renderPageError, stateHtml } from "../ui/states.js";
 import { showToast } from "../ui/toast.js";
 import { readLocalStorage, writeLocalStorage } from "../utils/BrowserStorage.js";
@@ -25,7 +25,7 @@ renderOnline();
 
 // Only the ID is shared; the card fills title, cover and stats from JM like any other list.
 const cardHtml = (item) => comicCardHtml({ id: item.id, name: "读取中…" }, {
-    after: voteBarHtml(item), fillTitle: true,
+    after: communityBarHtml(item), fillTitle: true,
 });
 
 function renderTabs() {
@@ -75,25 +75,36 @@ async function init() {
         restart();
     }));
     grid.addEventListener("click", (event) => {
-        const button = event.target.closest("[data-vote]");
-        if (button) vote(button);
+        const button = event.target.closest("[data-vote], [data-react], [data-react-add]");
+        if (button) act(button);
     });
     await feed.restart();
 }
 
-async function vote(button) {
-    const bar = button.closest("[data-vote-bar]");
-    const item = items.get(bar?.dataset.voteBar);
+/** One vote or reaction change; the bar is redrawn from the server's answer. */
+async function act(button) {
+    const bar = button.closest("[data-community-bar]");
+    const item = items.get(bar?.dataset.communityBar);
     if (!item || bar.dataset.busy) return;
+    let request;
+    if (button.dataset.vote) {
+        request = () => communityApi.vote(item.id, nextVote(item, button.dataset.vote));
+    } else if (button.dataset.react) {
+        const key = button.dataset.react;
+        request = () => communityApi.react(item.id, key, !(item.mine?.reactions || []).includes(key));
+    } else {
+        const key = await pickReaction(button, item.mine?.reactions || []);
+        if (!key || !bar.isConnected) return;
+        request = () => communityApi.react(item.id, key, !(item.mine?.reactions || []).includes(key));
+    }
     bar.dataset.busy = "true";
     bar.querySelectorAll("button").forEach((el) => { el.disabled = true; });
-    const { vote: choice, fun } = nextVote(item, button.dataset.vote);
     try {
-        const updated = await communityApi.vote(item.id, choice, fun);
+        const updated = await request();
         items.set(item.id, updated);
-        bar.outerHTML = voteBarHtml(updated);
+        bar.outerHTML = communityBarHtml(updated);
     } catch (error) {
-        showToast(`投票失败：${error.message}`, "warning");
+        showToast(error?.disabled ? "社区功能已关闭，可在设置中开启" : `操作失败：${error.message}`, "warning");
         bar.querySelectorAll("button").forEach((el) => { el.disabled = false; });
         delete bar.dataset.busy;
     }

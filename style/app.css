@@ -1848,8 +1848,62 @@ a.cover:active { transform: scale(0.98); }
 .vote-count { display: inline-flex; align-items: center; gap: 3px; margin-right: 2px; color: var(--accent-text); font-size: 12px; }
 .vote-count svg { width: 14px; height: 14px; }
 .vote-count b { font-variant-numeric: tabular-nums; }
-/* A full-width row under the cover and text, so the card's top keeps its usual layout. */
-.rich-card > .vote-bar { grid-column: 1 / -1; padding-top: 8px; border-top: 1px solid var(--line); }
+/* Full-width rows under the cover and text, so the card's top keeps its usual layout. */
+.rich-card > .community-bar { grid-column: 1 / -1; display: grid; gap: 8px; padding-top: 8px; border-top: 1px solid var(--line); }
+.reaction-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.reaction-chip, .reaction-add {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    min-height: 28px;
+    padding: 0 9px;
+    border: 1px solid var(--line-strong);
+    border-radius: 999px;
+    background: var(--surface-2);
+    color: var(--text-2);
+    font-size: 12px;
+    transition: background-color var(--t-fast) var(--ease), border-color var(--t-fast) var(--ease), transform var(--t-fast) var(--ease);
+}
+.reaction-emoji { font-size: 15px; line-height: 1; }
+.reaction-chip b { color: var(--text); font-weight: 600; font-variant-numeric: tabular-nums; }
+.reaction-chip[aria-pressed="true"] { border-color: var(--accent-line); background: var(--accent-soft); }
+.reaction-chip[aria-pressed="true"] b { color: var(--accent-text); }
+.reaction-add { padding: 0 8px; border-style: dashed; background: transparent; }
+.reaction-add svg { width: 15px; height: 15px; }
+.reaction-add span { font-weight: 600; line-height: 1; }
+@media (hover: hover) { .reaction-chip:hover:not(:disabled), .reaction-add:hover:not(:disabled) { background: var(--hover); color: var(--text); } }
+.reaction-chip:active:not(:disabled), .reaction-add:active:not(:disabled) { transform: scale(0.95); }
+.reaction-chip:disabled, .reaction-add:disabled { opacity: 0.55; }
+@media (pointer: coarse) { .reaction-chip, .reaction-add { min-height: 34px; padding: 0 11px; } }
+/* Picker: seven per row, faces on top and symbols below. */
+.reaction-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
+.reaction-grid button {
+    display: grid;
+    place-items: center;
+    aspect-ratio: 1;
+    min-width: 0;
+    border: 0;
+    border-radius: var(--r-md);
+    background: var(--surface-2);
+    font-size: 24px;
+    line-height: 1;
+    transition: background-color var(--t-fast) var(--ease), transform var(--t-fast) var(--ease);
+}
+@media (hover: hover) { .reaction-grid button:hover { background: var(--surface-3); transform: scale(1.08); } }
+.reaction-grid button:active { transform: scale(0.92); }
+.reaction-grid button[aria-pressed="true"] { background: var(--accent-soft); box-shadow: inset 0 0 0 1.5px var(--accent-line); }
+.reaction-popover {
+    position: fixed;
+    z-index: 90;
+    width: 320px;
+    padding: 8px;
+    border-radius: var(--r-lg);
+    background: var(--elevated);
+    box-shadow: var(--shadow-3), var(--line-inset);
+}
+.reaction-popover .reaction-grid { gap: 4px; }
+.reaction-popover .reaction-grid button { font-size: 22px; }
+.sheet-body .reaction-grid { margin-top: 12px; }
 .vote-btn {
     display: inline-flex;
     align-items: center;
@@ -1870,6 +1924,5 @@ a.cover:active { transform: scale(0.98); }
 .vote-btn:disabled { opacity: 0.55; }
 .vote-btn[data-vote="good"][aria-pressed="true"] { border-color: var(--success); background: var(--success-soft); color: var(--success); }
 .vote-btn[data-vote="bad"][aria-pressed="true"] { border-color: var(--error); background: var(--error-soft); color: var(--error); }
-.vote-btn[data-vote="fun"][aria-pressed="true"] { border-color: var(--accent-line); background: var(--accent-soft); color: var(--accent-text); }
 .vote-btn[aria-pressed="true"] b { color: inherit; }
 @media (pointer: coarse) { .vote-btn { min-height: 34px; padding: 0 11px; } }
